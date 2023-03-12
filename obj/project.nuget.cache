@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "sUUR9eYSlF3yrxcEd2DrpXBI0hD9f4rd7YDtYi/jt9xiuZ+SebWMZMp3W2d4l+Mm0NpjQnrv/2skCHosn//u3A==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\christophercylai\\Documents\\github\\QuantExcelAddIn\\qxlpy.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\christophercylai\\.nuget\\packages\\excel-dna\\1.6.0\\excel-dna.1.6.0.nupkg.sha512",
+    "C:\\Users\\christophercylai\\.nuget\\packages\\exceldna.addin\\1.6.0\\exceldna.addin.1.6.0.nupkg.sha512",
+    "C:\\Users\\christophercylai\\.nuget\\packages\\exceldna.integration\\1.6.0\\exceldna.integration.1.6.0.nupkg.sha512"
+  ],
+  "logs": []
+}
