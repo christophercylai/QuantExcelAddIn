@@ -23,7 +23,6 @@ namespace qxlpy
         {
             using (Py.GIL())
             {
-                scope.Exec("print('HelloWorld!')");
                 dynamic os = scope.Import("os");
                 string path_env = os.getenv("PATH");
                 return path_env;
