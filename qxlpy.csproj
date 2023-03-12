@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Excel-DNA" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Python.Runtime">
+      <HintPath>..\.venv\Lib\site-packages\pythonnet\runtime\Python.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

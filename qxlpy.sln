@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33424.131
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "qxlpy", "qxlpy.csproj", "{0EFC1C5B-CB8E-4D54-AA9E-DC77CCAA261B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EFC1C5B-CB8E-4D54-AA9E-DC77CCAA261B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EFC1C5B-CB8E-4D54-AA9E-DC77CCAA261B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EFC1C5B-CB8E-4D54-AA9E-DC77CCAA261B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EFC1C5B-CB8E-4D54-AA9E-DC77CCAA261B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B64C3DDD-C7D2-49F3-A98B-9D3DD3645656}
+	EndGlobalSection
+EndGlobal
