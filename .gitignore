@@ -1,4 +1,6 @@
 .vs
 bin
 obj
-.venv
+*.mks
+*.swp
+__pycache__/

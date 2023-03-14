@@ -9,8 +9,16 @@ namespace qxlpy
         public static string ReturnPath()
         {
             PyExecutor pye = new();
-            string ret = pye.GetPath();
-            return ret;
+            string path = pye.GetPath();
+            return path;
+        }
+
+        [ExcelFunction(Name = "HelloUser")]
+        public static string HelloUser(string name, int age)
+        {
+            PyExecutor pye = new();
+            string hw = pye.HelloUser(name, age);
+            return hw;
         }
     }
 }
