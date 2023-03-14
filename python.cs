@@ -47,5 +47,25 @@ namespace qxlpy
                 return hw_str;
             }
         }
+
+        public dynamic Calculate(double[] numlist)
+        {
+            using (Py.GIL())
+            {
+                dynamic site = scope.Import("site");
+                site.addsitedir(root);
+
+                dynamic calc = scope.Import("quant.calc");
+                PyList pylist = new PyList();
+                PyFloat pyf;
+                foreach (double n in numlist) {
+                    pyf = new PyFloat(n);
+                    pylist.Append(pyf);
+                }
+                dynamic py_obj = calc.calculate.Calculate(numlist);
+
+                return py_obj;
+            }
+        }
     }
 }
