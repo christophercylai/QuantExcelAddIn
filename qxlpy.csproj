@@ -6,10 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Excel-DNA" Version="1.6.0" />
   </ItemGroup>
