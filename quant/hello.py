@@ -1,5 +1,5 @@
 class Hello:
-    def __init__(self, name: str, age: int):
+    def __init__(self, name: str = "Chris", age: int = 40):
         self.name = name
         self.age = age
 
