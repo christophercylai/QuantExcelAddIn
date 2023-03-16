@@ -27,16 +27,16 @@ namespace qxlpy
         {
             PyExecutor pye = new();
             double[] numlist = {3, 4, 5};
-            dynamic calc = pye.Calculate(numlist);
+            string calc = pye.Calculate(numlist);
+            return calc;
+        }
 
-            // use GCHandleType.Normal because unmanaged obj cannot be Pinned
-            // https://learn.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.gchandletype
-            GCHandle handle = GCHandle.Alloc(calc, GCHandleType.Normal);
-
-            IntPtr pointer = GCHandle.ToIntPtr(handle);
-            string pointerDisplay = pointer.ToString();
-            handle.Free();
-            return pointerDisplay;
+        [ExcelFunction(Name = "CalculateAdd")]
+        public static double CalculateAdd(string calc_id)
+        {
+            PyExecutor pye = new();
+            double result = pye.AddNumbers(calc_id);
+            return result;
         }
     }
 }

@@ -1,4 +1,4 @@
-from .class Calculate:
+class Calculate:
     def __init__(self, numlst: list = [1, 2, 3]):
         self.numlist = numlst
 

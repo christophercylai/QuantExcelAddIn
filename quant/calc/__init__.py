@@ -1,1 +1,1 @@
-import quant
+from . import calculate
