@@ -1,5 +1,4 @@
 ﻿using ExcelDna.Integration;
-using System.Runtime.InteropServices;
 
 
 namespace qxlpy
