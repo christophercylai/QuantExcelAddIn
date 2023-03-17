@@ -1,3 +1,6 @@
+from quant import py_logger
+
+
 class Hello:
     def __init__(self, name: str = "Chris", age: int = 40):
         self.name = name
@@ -5,4 +8,5 @@ class Hello:
 
     def say_hello(self) -> str:
         hw = f"Hello! {self.name}, your age is {self.age}"
+        py_logger.info(f"Hello! {self.name}, your age is {self.age}")
         return hw

@@ -7,7 +7,6 @@ using Python.Runtime;
 
 
 namespace qxlpy
-
 {
     public class PyExecutor
     {
@@ -15,7 +14,7 @@ namespace qxlpy
 
         public PyExecutor()
         {
-            string root = Environment.GetEnvironmentVariable("qxlpyRoot") ?? @".";
+            string root = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
             string python_dll = $@"{root}\..\python37\python37.dll";
             Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", python_dll);
 
@@ -53,6 +52,7 @@ namespace qxlpy
 
         public dynamic Calculate(double[] numlist)
         {
+            // returns the address of the Calculate py obj
             using (Py.GIL())
             {
                 PyList pylist = new PyList();
@@ -73,12 +73,35 @@ namespace qxlpy
 
         public double AddNumbers(string calc_id)
         {
+            // this func thats the address returned from Calculate
             using (Py.GIL())
             {
                 dynamic quant = SCOPE.Import("quant");
                 dynamic calc_obj = quant.GET_OBJ(calc_id);
                 double result = calc_obj.add();
                 return result;
+            }
+        }
+
+        public void PrintLog(string logmsg, string level)
+        {
+            using (Py.GIL())
+            {
+                dynamic quant = SCOPE.Import("quant");
+                level = string.IsNullOrEmpty(level) ? "INFO" : level;
+                var loglevels = new Dictionary<string, dynamic> {
+                    {"DEBUG", quant.cs_logger.debug},
+                    {"INFO", quant.cs_logger.info},
+                    {"WARNING", quant.cs_logger.warning},
+                    {"ERROR", quant.cs_logger.error},
+                    {"CRITICAL", quant.cs_logger.critical}
+                };
+
+                if (!loglevels.ContainsKey(level)) {
+                    level = "INFO";
+                }
+                dynamic logger = loglevels[level];
+                logger(logmsg);
             }
         }
     }

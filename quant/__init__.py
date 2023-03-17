@@ -1,6 +1,13 @@
 from pathlib import Path
 import sys
 
+from .qxlpy_log import py_logger, cs_logger
+
+
+# add quant module to be searchable python
+sys.path.append(Path(__path__[0]))
+
+
 ### ========== Import Modules ========== ###
 # import ONLY the first layer of modules
 # anything inside the submodules is should always be private

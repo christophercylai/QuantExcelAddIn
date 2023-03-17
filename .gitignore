@@ -4,3 +4,4 @@ obj
 Properties
 *.swp
 __pycache__/
+Logs/
