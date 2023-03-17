@@ -1,7 +1,7 @@
 # Excel AddIn for Quantitative Solver
 * This AddIn is written with C#, while utilizing Excel-DNA for creating Excel User Defined Functions (UDFs), as well as Python.NET to allow Python functionalities to be called by C#
 
-# Visual Studio 2022 Setup
+## Visual Studio 2022 Setup
 * NuGet\Install-Package ExcelDna.AddIn
 
 ## Reference
