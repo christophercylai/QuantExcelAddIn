@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from .qxlpy_log import logger
+from .qxlpy_log import py_logger, cs_logger
 
 
 # add quant module to be searchable python

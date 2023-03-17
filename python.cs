@@ -91,13 +91,16 @@ namespace qxlpy
                 dynamic quant = SCOPE.Import("quant");
                 level = string.IsNullOrEmpty(level) ? "INFO" : level;
                 var loglevels = new Dictionary<string, dynamic> {
-                    {"DEBUG", quant.logger.debug},
-                    {"INFO", quant.logger.info},
-                    {"WARNING", quant.logger.warning},
-                    {"ERROR", quant.logger.error},
-                    {"CRITICAL", quant.logger.critical}
+                    {"DEBUG", quant.cs_logger.debug},
+                    {"INFO", quant.cs_logger.info},
+                    {"WARNING", quant.cs_logger.warning},
+                    {"ERROR", quant.cs_logger.error},
+                    {"CRITICAL", quant.cs_logger.critical}
                 };
 
+                if (!loglevels.ContainsKey(level)) {
+                    level = "INFO";
+                }
                 dynamic logger = loglevels[level];
                 logger(logmsg);
             }

@@ -1,4 +1,4 @@
-from quant import logger
+from quant import py_logger
 
 
 class Hello:
@@ -8,5 +8,5 @@ class Hello:
 
     def say_hello(self) -> str:
         hw = f"Hello! {self.name}, your age is {self.age}"
-        logger.info(f"Hello! {self.name}, your age is {self.age}")
+        py_logger.info(f"Hello! {self.name}, your age is {self.age}")
         return hw
