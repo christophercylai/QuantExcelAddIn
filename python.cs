@@ -53,6 +53,7 @@ namespace qxlpy
 
         public dynamic Calculate(double[] numlist)
         {
+            // returns the address of the Calculate py obj
             using (Py.GIL())
             {
                 PyList pylist = new PyList();
@@ -73,12 +74,32 @@ namespace qxlpy
 
         public double AddNumbers(string calc_id)
         {
+            // this func thats the address returned from Calculate
             using (Py.GIL())
             {
                 dynamic quant = SCOPE.Import("quant");
                 dynamic calc_obj = quant.GET_OBJ(calc_id);
                 double result = calc_obj.add();
                 return result;
+            }
+        }
+
+        public void PrintLog(string logmsg, string level)
+        {
+            using (Py.GIL())
+            {
+                dynamic quant = SCOPE.Import("quant");
+                level = string.IsNullOrEmpty(level) ? "INFO" : level;
+                var loglevels = new Dictionary<string, dynamic> {
+                    {"DEBUG", quant.logger.debug},
+                    {"INFO", quant.logger.info},
+                    {"WARNING", quant.logger.warning},
+                    {"ERROR", quant.logger.error},
+                    {"CRITICAL", quant.logger.critical}
+                };
+
+                dynamic logger = loglevels[level];
+                logger(logmsg);
             }
         }
     }

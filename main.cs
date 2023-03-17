@@ -2,6 +2,7 @@
 
 
 namespace qxlpy
+
 {
     public static class ExcelFunc
     {
@@ -36,6 +37,15 @@ namespace qxlpy
             PyExecutor pye = new();
             double result = pye.AddNumbers(calc_id);
             return result;
+        }
+
+        [ExcelFunction(Name = "LogMessage")]
+        public static string LogMessage(string log_msg, string level)
+        {
+            PyExecutor pye = new();
+            pye.PrintLog(log_msg, level);
+            string ret = "'" + log_msg + "'" + " is written on Logs/qxlpy.log";
+            return ret;
         }
     }
 }
