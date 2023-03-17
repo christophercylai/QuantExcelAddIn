@@ -15,7 +15,7 @@ namespace qxlpy
 
         public PyExecutor()
         {
-            string root = Environment.GetEnvironmentVariable("qxlpyRoot") ?? @".";
+            string root = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;;
             string python_dll = $@"{root}\..\python37\python37.dll";
             Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", python_dll);
 
