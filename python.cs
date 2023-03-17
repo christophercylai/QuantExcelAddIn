@@ -7,7 +7,6 @@ using Python.Runtime;
 
 
 namespace qxlpy
-
 {
     public class PyExecutor
     {

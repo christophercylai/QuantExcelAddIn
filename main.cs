@@ -2,7 +2,6 @@
 
 
 namespace qxlpy
-
 {
     public static class ExcelFunc
     {
