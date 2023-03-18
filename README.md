@@ -39,3 +39,4 @@ NuGet\Install-Package ExcelDna.AddIn
 ## Reference
 * [Python.NET Reference](https://pythonnet.github.io/pythonnet/reference.html#)
 * [Excel-DNA Quickstart Tutorial](https://colinlegg.wordpress.com/2016/09/07/my-first-c-net-udf-using-excel-dna-and-visual-studio/)
+* [Excel Object model)](https://learn.microsoft.com/en-us/office/vba/api/overview/excel/object-model)

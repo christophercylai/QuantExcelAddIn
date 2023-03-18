@@ -1,8 +1,37 @@
 ﻿using ExcelDna.Integration;
+using ExcelDna.Integration.CustomUI;
+using System.Runtime.InteropServices;
 
 
 namespace qxlpy
 {
+    [ComVisible(true)]
+    public class RibbonController : ExcelRibbon
+    {
+        public override string GetCustomUI(string RibbonID)
+        {
+            return @"
+      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui'>
+      <ribbon>
+        <tabs>
+          <tab id='qxltab' label='QXLPY'>
+            <group id='qxlgroup' label='qxlgroup'>
+              <button id='expandfunc' label='Expand Function' onAction='OnButtonPressed'/>
+            </group >
+          </tab>
+        </tabs>
+      </ribbon>
+    </customUI>";
+        }
+
+        public void OnButtonPressed(IRibbonControl control)
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+            // RomAbsolute=false, ColumnAbsolute=false, AddressReference
+            xlApp.ActiveCell.Value = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
+        }
+    }
+
     public static class ExcelFunc
     {
         [ExcelFunction(Name = "ReturnPath")]
