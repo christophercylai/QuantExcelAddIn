@@ -36,9 +36,12 @@ namespace qxlpy
             var rgx_y = new Regex(@"(?<=.+C\[)[0-9]+");
             Match match_x = rgx_x.Match(cell_addr);
             Match match_y = rgx_y.Match(cell_addr);
-            string x = match_x.Success ? match_x.Value : "0";
-            string y = match_y.Success ? match_y.Value : "0";
-            xlApp.ActiveCell.Value =  x + ", " + y;
+            // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
+            // Cell A1 = 1, 1
+            int x = match_x.Success ? int.Parse(match_x.Value)+1 : 1;
+            int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
+            var cell_value = xlApp.Cells(x, y).Value;
+            xlApp.Cells(1, 1).Value = cell_value;
         }
     }
 
