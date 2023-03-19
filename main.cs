@@ -122,6 +122,9 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyLogMessage")]
         public static string QxlpyLogMessage(string log_msg, string level)
         {
+            if (log_msg == "" || level == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
             PyExecutor pye = new();
             pye.LogMessage(log_msg, level);
             string ret = "'" + log_msg + "'" + " is written on Logs/qxlcs.log";
@@ -130,9 +133,13 @@ namespace qxlpy
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
+        // TODO: nums should be numlist that takes a range of cells
         [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate()
+        public static string QxlpyGetCalculate(double nums)
         {
+            if (nums == 0) {
+                throw new ArgumentNullException("Missing Arguments");
+            }
             PyExecutor pye = new();
             double[] numlist = {3, 4, 5};
             string calc = pye.GetCalculate(numlist);
@@ -142,6 +149,9 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyCalculateAddNum")]
         public static double QxlpyCalculateAddNum(string calc_id)
         {
+            if (calc_id == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
             PyExecutor pye = new();
             double result = pye.CalculateAddNum(calc_id);
             return result;
