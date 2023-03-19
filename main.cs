@@ -29,9 +29,10 @@ namespace qxlpy
 
         public void OnButtonPressed(IRibbonControl control)
         {
-            // TODO: Check if there is an active workbook and cell
-
             dynamic xlApp = ExcelDnaUtil.Application;
+            // Check if there is an active worksheet
+            if (xlApp.ActiveSheet == null) { return; }
+
             // RomAbsolute=false, ColumnAbsolute=false, AddressReference
             string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
             var rgx_x = new Regex(@"(?<=^R\[)[0-9]+");
@@ -42,7 +43,11 @@ namespace qxlpy
             // Cells A1 = 1, 1
             int x = match_x.Success ? int.Parse(match_x.Value)+1 : 1;
             int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
-            var cell_value = xlApp.Cells(x, y).Value;
+
+            // Check if the cell has a formula
+            if (!xlApp.Cells(x, y).HasFormula) { return; }
+
+            string cell_value = xlApp.Cells(x, y).Formula;
             xlApp.Cells(1, 1).Value = cell_value;
         }
     }
