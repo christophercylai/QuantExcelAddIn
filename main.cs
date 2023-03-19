@@ -3,6 +3,7 @@ using ExcelDna.Integration.CustomUI;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Drawing;
+using System.Reflection;
 
 
 namespace qxlpy
@@ -59,16 +60,27 @@ namespace qxlpy
             }
             string f = match_f.Value;
 
-            // Cells formatting for the given function
+            // Check whether formula is a method of ExcelFunc
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
+            if (method_info == null) { return; }
+            ParameterInfo[] param_info = method_info.GetParameters();
+            int p_len = param_info.Length;
+
+            // Cells formatting
+            // Title = function name
             xlApp.Cells(y, x).Value = f;
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x+1)).Merge();
-            xlApp.Cells(y+1, x).Value = "Output";
-            xlApp.Cells(y+1, x).Interior.Color = Color.FromArgb(77, 241, 255, 205);
-            xlApp.Cells(y+1, x+1).Value = cell_formula;
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y+1, x+1)).Columns.Autofit();
+            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x + 1)).Merge();
+            // Loop throught params
+            for (int i = 1; i <= p_len; i++) {
+                xlApp.Cells(y + i, x).Value = param_info[i - 1].Name;
+            }
+            xlApp.Cells(y + p_len + 1, x).Value = "Output";
+            xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x)).Interior.Color = Color.FromArgb(77, 241, 255, 205);
+            xlApp.Cells(y + p_len + 1, x + 1).Value = cell_formula;
+            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Columns.Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y+1, x+1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
+            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
             // Set minimum column width
             if (xlApp.Cells(y, x).ColumnWidth < 12) {
