@@ -71,19 +71,37 @@ namespace qxlpy
             xlApp.Cells(y, x).Value = f;
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x + 1)).Merge();
-            // Loop through params
-            for (int i = 1; i <= p_len; i++) {
-                xlApp.Cells(y + i, x).Value = param_info[i - 1].Name;
-            }
-            xlApp.Cells(y + p_len + 1, x).Value = "Output";
-            xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x)).Interior.Color = Color.FromArgb(77, 241, 255, 205);
 
-            // Loop through formula
+            // Loop through params and formula
             string new_formula = "=" + f + "(";
+            int ad_row_count = 1;  // count the rows of array and dict to the right of func name
+            string comma, param;
+            Type param_type;
             for (int i = 1; i <= p_len; i++) {
-                string comma = i == p_len ? "" : ", ";
-                new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
+                param_type = param_info[i - 1].ParameterType;
+                comma = i == p_len ? "" : ", ";
+                param = param_info[i - 1].Name;
+                if (param_type.Name.Contains("[]")) {
+                    // array type
+                    ad_row_count += 1;
+                    var param_cell = xlApp.Cells(y, x + ad_row_count);
+                    param_cell.Value = param;
+                    param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
+                    param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
+                    var array_cells = xlApp.Range(
+                        xlApp.Cells(y + 1, x + ad_row_count),
+                        xlApp.Cells(y + 3, x + ad_row_count)
+                    );
+                    new_formula += array_cells.Address + comma;
+                    xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
+                } else {
+                    // str, int, double types
+                    new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
+                }
+                xlApp.Cells(y + i, x).Value = param;
             }
+            xlApp.Cells(y + p_len + 1, x).Value = "return";
+            xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x)).Interior.Color = Color.FromArgb(77, 241, 255, 205);
             new_formula += ")";
             xlApp.Cells(y + p_len + 1, x + 1).Value = new_formula;
 
@@ -133,15 +151,13 @@ namespace qxlpy
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
-        // TODO: nums should be numlist that takes a range of cells
         [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate(double nums)
+        public static string QxlpyGetCalculate(object[] numlist, object[] strlist)
         {
-            if (nums == 0) {
+            if (numlist[0].ToString() == "") {
                 throw new ArgumentNullException("Missing Arguments");
             }
             PyExecutor pye = new();
-            double[] numlist = {3, 4, 5};
             string calc = pye.GetCalculate(numlist);
             return calc;
         }

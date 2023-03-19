@@ -65,15 +65,19 @@ namespace qxlpy
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
-        public string GetCalculate(double[] numlist)
+        public string GetCalculate(object[] numlist)
         {
             // returns the address of the Calculate py obj
             using (Py.GIL())
             {
                 PyList pylist = new PyList();
                 PyFloat pyf;
-                foreach (double n in numlist) {
-                    pyf = new PyFloat(n);
+                double num;
+                bool parse_ok;
+                foreach (object n in numlist) {
+                    parse_ok = Double.TryParse(n.ToString(), out num);
+                    if (!parse_ok) { throw new ArrayTypeMismatchException("Wrong type in array"); }
+                    pyf = new PyFloat(num);
                     pylist.Append(pyf);
                 }
                 dynamic calc = SCOPE.Import("quant.calculate");
