@@ -29,6 +29,8 @@ namespace qxlpy
 
         public void OnButtonPressed(IRibbonControl control)
         {
+            // TODO: Check if there is an active workbook and cell
+
             dynamic xlApp = ExcelDnaUtil.Application;
             // RomAbsolute=false, ColumnAbsolute=false, AddressReference
             string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
@@ -47,38 +49,40 @@ namespace qxlpy
 
     public static class ExcelFunc
     {
-        [ExcelFunction(Name = "ReturnPath")]
-        public static string ReturnPath()
+        [ExcelFunction(Name = "QxlpyGetPath")]
+        public static string QxlpyGetPath()
         {
             PyExecutor pye = new();
             string path = pye.GetPath();
             return path;
         }
 
-        [ExcelFunction(Name = "GetCalculate")]
-        public static string GetCalculate()
+        [ExcelFunction(Name = "QxlpyLogMessage")]
+        public static string QxlpyLogMessage(string log_msg, string level)
+        {
+            PyExecutor pye = new();
+            pye.LogMessage(log_msg, level);
+            string ret = "'" + log_msg + "'" + " is written on Logs/qxlcs.log";
+            return ret;
+        }
+
+        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
+
+        [ExcelFunction(Name = "QxlpyGetCalculate")]
+        public static string QxlpyGetCalculate()
         {
             PyExecutor pye = new();
             double[] numlist = {3, 4, 5};
-            string calc = pye.Calculate(numlist);
+            string calc = pye.GetCalculate(numlist);
             return calc;
         }
 
-        [ExcelFunction(Name = "CalculateAdd")]
-        public static double CalculateAdd(string calc_id)
+        [ExcelFunction(Name = "QxlpyCalculateAddNum")]
+        public static double QxlpyCalculateAddNum(string calc_id)
         {
             PyExecutor pye = new();
-            double result = pye.AddNumbers(calc_id);
+            double result = pye.CalculateAddNum(calc_id);
             return result;
-        }
-
-        [ExcelFunction(Name = "LogMessage")]
-        public static string LogMessage(string log_msg, string level)
-        {
-            PyExecutor pye = new();
-            pye.PrintLog(log_msg, level);
-            string ret = "'" + log_msg + "'" + " is written on Logs/qxlpy.log";
-            return ret;
         }
     }
 }
