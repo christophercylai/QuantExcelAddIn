@@ -1,5 +1,5 @@
-class Calculate:
-    def __init__(self, numlst: list = [1, 2, 3]):
+class Calc:
+    def __init__(self, numlst: list):
         self.numlist = numlst
 
     def add(self) -> float:
