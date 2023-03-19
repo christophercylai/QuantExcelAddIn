@@ -37,7 +37,7 @@ namespace qxlpy
             Match match_x = rgx_x.Match(cell_addr);
             Match match_y = rgx_y.Match(cell_addr);
             // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
-            // Cell A1 = 1, 1
+            // Cells A1 = 1, 1
             int x = match_x.Success ? int.Parse(match_x.Value)+1 : 1;
             int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
             var cell_value = xlApp.Cells(x, y).Value;
@@ -53,14 +53,6 @@ namespace qxlpy
             PyExecutor pye = new();
             string path = pye.GetPath();
             return path;
-        }
-
-        [ExcelFunction(Name = "HelloUser")]
-        public static string HelloUser(string name, int age)
-        {
-            PyExecutor pye = new();
-            string hw = pye.HelloUser(name, age);
-            return hw;
         }
 
         [ExcelFunction(Name = "GetCalculate")]

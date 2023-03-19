@@ -38,18 +38,6 @@ namespace qxlpy
             }
         }
 
-        public string HelloUser(string name, int age)
-        {
-            using (Py.GIL())
-            {
-                dynamic hw = SCOPE.Import("quant.hello");
-                dynamic hw_obj = hw.Hello(name, age);
-                string hw_str = hw_obj.say_hello();
-
-                return hw_str;
-            }
-        }
-
         public dynamic Calculate(double[] numlist)
         {
             // returns the address of the Calculate py obj

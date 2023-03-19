@@ -11,7 +11,6 @@ sys.path.append(Path(__path__[0]))
 ### ========== Import Modules ========== ###
 # import ONLY the first layer of modules
 # anything inside the submodules is should always be private
-from . import hello
 from . import calc
 
 
