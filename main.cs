@@ -33,7 +33,8 @@ namespace qxlpy
         {
             dynamic xlApp = ExcelDnaUtil.Application;
             // Check if there is an active worksheet
-            if (xlApp.ActiveSheet == null) { return; }
+            var sheet = xlApp.ActiveSheet;
+            if (sheet == null) { return; }
 
             // RomAbsolute=false, ColumnAbsolute=false, AddressReference
             string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
@@ -86,6 +87,7 @@ namespace qxlpy
                     ad_row_count += 1;
                     var param_cell = xlApp.Cells(y, x + ad_row_count);
                     param_cell.Value = param;
+                    sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
                     param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
                     var array_cells = xlApp.Range(
@@ -93,6 +95,7 @@ namespace qxlpy
                         xlApp.Cells(y + 3, x + ad_row_count)
                     );
                     new_formula += array_cells.Address + comma;
+                    // grey out cell
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                 } else {
                     // str, int, double types
@@ -105,24 +108,26 @@ namespace qxlpy
             new_formula += ")";
             xlApp.Cells(y + p_len + 1, x + 1).Value = new_formula;
 
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Columns.Autofit();
+            sheet.Columns(x).Autofit();
+            sheet.Columns(x + 1).Autofit();
+            //xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Columns.Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
             // Set minimum column width
-            if (xlApp.Cells(y, x).ColumnWidth < 12) {
-                xlApp.Cells(y, x).ColumnWidth = 12;
+            if (sheet.Columns(x).ColumnWidth < 12) {
+                sheet.Columns(x).ColumnWidth = 12;
             }
-            if (xlApp.Cells(y, x+1).ColumnWidth < 12) {
-                xlApp.Cells(y, x+1).ColumnWidth = 12;
+            if (sheet.Columns(x + 1).ColumnWidth < 12) {
+                sheet.Columns(x + 1).ColumnWidth = 12;
             }
 
             // Set maximum column width
-            if (xlApp.Cells(y, x).ColumnWidth > 50) {
-                xlApp.Cells(y, x).ColumnWidth = 50;
+            if (sheet.Columns(x).ColumnWidth > 50) {
+                sheet.Columns(x).ColumnWidth = 50;
             }
-            if (xlApp.Cells(y, x+1).ColumnWidth > 50) {
-                xlApp.Cells(y, x+1).ColumnWidth = 50;
+            if (sheet.Columns(x + 1).ColumnWidth > 50) {
+                sheet.Columns(x + 1).ColumnWidth = 50;
             }
         }
     }
@@ -152,7 +157,7 @@ namespace qxlpy
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
         [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate(object[] numlist, object[] strlist)
+        public static string QxlpyGetCalculate(object[] numlist)
         {
             if (numlist[0].ToString() == "") {
                 throw new ArgumentNullException("Missing Arguments");
