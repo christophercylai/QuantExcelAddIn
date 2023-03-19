@@ -71,13 +71,22 @@ namespace qxlpy
             xlApp.Cells(y, x).Value = f;
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x + 1)).Merge();
-            // Loop throught params
+            // Loop through params
             for (int i = 1; i <= p_len; i++) {
                 xlApp.Cells(y + i, x).Value = param_info[i - 1].Name;
             }
             xlApp.Cells(y + p_len + 1, x).Value = "Output";
             xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x)).Interior.Color = Color.FromArgb(77, 241, 255, 205);
-            xlApp.Cells(y + p_len + 1, x + 1).Value = cell_formula;
+
+            // Loop through formula
+            string new_formula = "=" + f + "(";
+            for (int i = 1; i <= p_len; i++) {
+                string comma = i == p_len ? "" : ", ";
+                new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
+            }
+            new_formula += ")";
+            xlApp.Cells(y + p_len + 1, x + 1).Value = new_formula;
+
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Columns.Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
