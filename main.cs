@@ -1,6 +1,7 @@
 ﻿using ExcelDna.Integration;
 using ExcelDna.Integration.CustomUI;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 
 namespace qxlpy
@@ -15,8 +16,10 @@ namespace qxlpy
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
-            <group id='qxlgroup' label='qxlgroup'>
-              <button id='expandfunc' label='Expand Function' onAction='OnButtonPressed'/>
+            <group id='qxlpy' label='QXLPY'>
+              <button id='expandfunc' label='Expand Function'
+                onAction='OnButtonPressed' size='large'
+                imageMso='ConditionalFormattingColorScalesGallery' />
             </group >
           </tab>
         </tabs>
@@ -28,7 +31,14 @@ namespace qxlpy
         {
             dynamic xlApp = ExcelDnaUtil.Application;
             // RomAbsolute=false, ColumnAbsolute=false, AddressReference
-            xlApp.ActiveCell.Value = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
+            string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
+            var rgx_x = new Regex(@"(?<=^R\[)[0-9]+");
+            var rgx_y = new Regex(@"(?<=.+C\[)[0-9]+");
+            Match match_x = rgx_x.Match(cell_addr);
+            Match match_y = rgx_y.Match(cell_addr);
+            string x = match_x.Success ? match_x.Value : "0";
+            string y = match_y.Success ? match_y.Value : "0";
+            xlApp.ActiveCell.Value =  x + ", " + y;
         }
     }
 
