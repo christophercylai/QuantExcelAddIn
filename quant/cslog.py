@@ -11,5 +11,5 @@ def LogMessage(logmsg: str, level: str) -> str:
     }
     level = level if level in loglevels else "INFO"
     loglevels[level](logmsg)
-    ret = f"'{logmsg}' is written on Logs/qxlcs.log"
+    ret = f"'{logmsg}' is written on Logs/qxlcs.log as {level}"
     return ret
