@@ -74,7 +74,8 @@ namespace qxlpy
 
         public double CalculateAddNum(string addr)
         {
-            // this func thats the address returned from Calculate
+            // this func takes the address returned from Calculate
+            // and make add computation
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.calculate");
@@ -86,6 +87,7 @@ namespace qxlpy
         public string StoreStrDict(object[,] objdict)
         {
             // returns the address of the Calculate py obj
+            // <key: str, value: str>
             using (Py.GIL())
             {
                 var pydict = new PyDict();
@@ -102,6 +104,21 @@ namespace qxlpy
                 }
                 dynamic imp = SCOPE.Import("quant.objects");
                 string ret = imp.StoreStrDict(pydict);
+                return ret;
+            }
+        }
+
+        public List<string> ListGlobalObjects()
+        {
+            // returns a list of stored objects
+            using (Py.GIL())
+            {
+                dynamic imp = SCOPE.Import("quant.objects");
+                PyList pylist = imp.ListGlobalObjects();
+                var ret = new List<string>();
+                foreach (PyObject pyobj in pylist) {
+                    ret.Add(pyobj.ToString());
+                }
                 return ret;
             }
         }

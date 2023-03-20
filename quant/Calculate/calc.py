@@ -4,7 +4,7 @@ from quant import py_logger
 class Calc:
     def __init__(self, numlst: list):
         for n in numlst:
-            if not isinstance(n, float):
+            if not isinstance(n, float) and not isinstance(n, int):
                 err = "Non-float value was supplied in numlist"
                 py_logger.error(err)
                 raise TypeError(err)
