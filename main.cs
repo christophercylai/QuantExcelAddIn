@@ -29,6 +29,8 @@ namespace qxlpy
     </customUI>";
         }
 
+        private static string old_formula;
+
         public void OnButtonPressed(IRibbonControl control)
         {
             // Check if there is an active worksheet
@@ -59,9 +61,9 @@ namespace qxlpy
             }
 
             // Get formula name
-            string cell_formula = xlApp.Cells(y, x).Formula;
+            old_formula = xlApp.Cells(y, x).Formula;
             var rgx_f = new Regex(@"[a-zA-Z][a-zA-Z0-9]+");
-            Match match_f = rgx_f.Match(cell_formula);
+            Match match_f = rgx_f.Match(old_formula);
 
             if (!match_f.Success) {
                 WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9]+", "WARNING");
@@ -171,6 +173,7 @@ namespace qxlpy
                     ea_range.UnMerge();
                     ea_range.Clear();
                 }
+                bt[0].Value = old_formula;
                 throw new SystemException("Cannot overwrite non-empty cell(s): " + range.Address);
             }
             bt.Add(range);
