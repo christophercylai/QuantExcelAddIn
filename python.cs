@@ -41,31 +41,19 @@ namespace qxlpy
             }
         }
 
-        public void LogMessage(string logmsg, string level)
+        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
+
+        public string LogMessage(string logmsg, string level)
         {
             using (Py.GIL())
             {
-                dynamic quant = SCOPE.Import("quant");
-                level = string.IsNullOrEmpty(level) ? "INFO" : level;
-                var loglevels = new Dictionary<string, dynamic> {
-                    {"DEBUG", quant.cs_logger.debug},
-                    {"INFO", quant.cs_logger.info},
-                    {"WARNING", quant.cs_logger.warning},
-                    {"ERROR", quant.cs_logger.error},
-                    {"CRITICAL", quant.cs_logger.critical}
-                };
-
-                if (!loglevels.ContainsKey(level)) {
-                    level = "INFO";
-                }
-                dynamic logger = loglevels[level];
-                logger(logmsg);
+                dynamic imp = SCOPE.Import("quant.cslog");
+                string ret = imp.LogMessage(logmsg, level);
+                return ret;
             }
         }
 
-        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
-
-        public string GetCalculate(object[] numlist)
+        public string GetCalculate(object[] numlst)
         {
             // returns the address of the Calculate py obj
             using (Py.GIL())
@@ -74,27 +62,26 @@ namespace qxlpy
                 PyFloat pyf;
                 double num;
                 bool parse_ok;
-                foreach (object n in numlist) {
+                foreach (object n in numlst) {
                     parse_ok = Double.TryParse(n.ToString(), out num);
                     if (!parse_ok) { throw new ArrayTypeMismatchException("Wrong type in array"); }
                     pyf = new PyFloat(num);
                     pylist.Append(pyf);
                 }
-                dynamic calc = SCOPE.Import("quant.calculate");
-                string addr = calc.GetCalculate(numlist);
-
-                return addr;
+                dynamic imp = SCOPE.Import("quant.calculate");
+                string ret = imp.GetCalculate(numlst);
+                return ret;
             }
         }
 
-        public double CalculateAddNum(string calc_id)
+        public double CalculateAddNum(string addr)
         {
             // this func thats the address returned from Calculate
             using (Py.GIL())
             {
-                dynamic calc = SCOPE.Import("quant.calculate");
-                double result = calc.CalculateAddNum(calc_id);
-                return result;
+                dynamic imp = SCOPE.Import("quant.calculate");
+                double ret = imp.CalculateAddNum(addr);
+                return ret;
             }
         }
     }

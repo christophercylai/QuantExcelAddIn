@@ -198,40 +198,39 @@ namespace qxlpy
             return path;
         }
 
+        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
+
         [ExcelFunction(Name = "QxlpyLogMessage")]
-        public static string QxlpyLogMessage(string log_msg, string level)
+        public static string QxlpyLogMessage(string logmsg, string level)
         {
-            if (log_msg == "" || level == "") {
+            if (logmsg == "" || level == "") {
                 throw new ArgumentNullException("Missing Arguments");
             }
             PyExecutor pye = new();
-            pye.LogMessage(log_msg, level);
-            string ret = "'" + log_msg + "'" + " is written on Logs/qxlcs.log";
+            string ret = pye.LogMessage(logmsg, level);
             return ret;
         }
 
-        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
-
         [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate(object[] numlist)
+        public static string QxlpyGetCalculate(object[] objlist)
         {
-            if (numlist[0].ToString() == "") {
+            if (objlist[0].ToString() == "") {
                 throw new ArgumentNullException("Missing Arguments");
             }
             PyExecutor pye = new();
-            string calc = pye.GetCalculate(numlist);
-            return calc;
+            string ret = pye.GetCalculate(objlist);
+            return ret;
         }
 
         [ExcelFunction(Name = "QxlpyCalculateAddNum")]
-        public static double QxlpyCalculateAddNum(string calc_id)
+        public static double QxlpyCalculateAddNum(string addr)
         {
-            if (calc_id == "") {
+            if (addr == "") {
                 throw new ArgumentNullException("Missing Arguments");
             }
             PyExecutor pye = new();
-            double result = pye.CalculateAddNum(calc_id);
-            return result;
+            double ret = pye.CalculateAddNum(addr);
+            return ret;
         }
     }
 }
