@@ -101,6 +101,7 @@ namespace qxlpy
                 param = param_info[i - 1].Name;
                 if (param_type.Name.Contains("[]")) {
                     // array type
+                    // title cell
                     ad_row_count += 1;
                     var param_cell = xlApp.Cells(y, x + ad_row_count);
                     RangeEmpty(param_cell, backtrack);
@@ -111,13 +112,40 @@ namespace qxlpy
                         xlApp.Cells(y + 1, x + ad_row_count),
                         xlApp.Cells(y + 3, x + ad_row_count)
                     );
+                    // array cells
                     RangeEmpty(array_cells, backtrack);
                     sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     new_formula += array_cells.Address + comma;
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
+                } else if (param_type.Name.Contains("[,]")) {
+                    // dict type
+                    // title cells
+                    RangeEmpty(xlApp.Cells(y, x + ad_row_count + 1), backtrack);
+                    RangeEmpty(xlApp.Cells(y, x + ad_row_count + 2), backtrack);
+                    xlApp.Cells(y, x + ad_row_count + 1).Value = param;
+                    var param_cell = xlApp.Range(
+                        xlApp.Cells(y, x + ad_row_count + 1),
+                        xlApp.Cells(y, x + ad_row_count + 2)
+                    );
+                    param_cell.Merge();
+                    param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
+                    param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
+
+                    // dict cells
+                    var dict_cells = xlApp.Range(
+                        xlApp.Cells(y + 1, x + ad_row_count + 1),
+                        xlApp.Cells(y + 3, x + ad_row_count + 2)
+                    );
+                    RangeEmpty(dict_cells, backtrack);
+                    sheet.Columns(x + ad_row_count + 1).ColumnWidth = 12;
+                    sheet.Columns(x + ad_row_count + 2).ColumnWidth = 12;
+                    ad_row_count += 2;
+                    new_formula += dict_cells.Address + comma;
+                    // grey out unused cell right to param name
+                    xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                 } else {
-                    // str, int, double types
+                    // bool, str, int, double types
                     new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
                 }
                 RangeEmpty(xlApp.Cells(y + i, x), backtrack);
