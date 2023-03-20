@@ -41,19 +41,9 @@ namespace qxlpy
                 return;
             }
 
-            // Get numeric cell address
-            // RomAbsolute=false, ColumnAbsolute=false, AddressReference
-            string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
-            // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
-            // Cells A1 = 1, 1
-            // Cells(Row, Column)
-            var rgx_x = new Regex(@"(?<=.+C\[)[0-9]+");
-            var rgx_y = new Regex(@"(?<=^R\[)[0-9]+");
-            Match match_x = rgx_x.Match(cell_addr);
-            Match match_y = rgx_y.Match(cell_addr);
-            int x = match_x.Success ? int.Parse(match_x.Value)+1 : 1;
-            int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
-
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
             // Check if the cell has a formula
             if (!xlApp.Cells(y, x).HasFormula) {
                 ExManip.WriteLog("Seleted cell does not have a formula", "WARNING");
@@ -224,6 +214,26 @@ namespace qxlpy
             PyExecutor pye = new();
             pye.LogMessage(logmsg, level);
         }
+
+        public static int[] GetActiveCellPos()
+        {
+            // Get numeric cell address
+            dynamic xlApp = ExcelDnaUtil.Application;
+
+            // RomAbsolute=false, ColumnAbsolute=false, AddressReference
+            string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
+            // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
+            // Cells A1 = 1, 1
+            // Cells(Row, Column)
+            var rgx_x = new Regex(@"(?<=.+C\[)[0-9]+");
+            var rgx_y = new Regex(@"(?<=^R\[)[0-9]+");
+            Match match_x = rgx_x.Match(cell_addr);
+            Match match_y = rgx_y.Match(cell_addr);
+            int x = match_x.Success ? int.Parse(match_x.Value)+1 : 1;
+            int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
+
+            return new int[] {y, x};
+        }
     }
     // END: public static class ExManip
 
@@ -285,11 +295,31 @@ namespace qxlpy
         }
 
         [ExcelFunction(Name = "QxlpyListGlobalObjects")]
-        public static dynamic QxlpyListGlobalObjects()
+        public static string QxlpyListGlobalObjects()
         {
             PyExecutor pye = new();
             object[] ret = pye.ListGlobalObjects().ToArray();
-            return ret;
+            int l_len = ret.Length;
+            if (l_len == 0) { return "N/A"; }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            dynamic xlApp = ExcelDnaUtil.Application;
+            for (int i = 0; i < l_len; i++) {
+                var ex_ref = new ExcelReference(y + i, x - 1);
+                string s = ex_ref.GetValue().ToString();
+                if (s != "ExcelDna.Integration.ExcelEmpty") {
+                    string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x).Address;
+                    pye.LogMessage(errmsg, "WARNING");
+                    return errmsg;
+                }
+                s = ret[i].ToString();
+                ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+            }
+
+            return "SUCCESS";
         }
     }
     // END: public static class ExcelFunc
