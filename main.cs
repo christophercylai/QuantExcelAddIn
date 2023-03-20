@@ -31,11 +31,15 @@ namespace qxlpy
 
         public void OnButtonPressed(IRibbonControl control)
         {
-            dynamic xlApp = ExcelDnaUtil.Application;
             // Check if there is an active worksheet
+            dynamic xlApp = ExcelDnaUtil.Application;
             var sheet = xlApp.ActiveSheet;
-            if (sheet == null) { return; }
+            if (sheet == null) {
+                WriteLog("There is no active sheet", "WARNING");
+                return;
+            }
 
+            // Get numeric cell address
             // RomAbsolute=false, ColumnAbsolute=false, AddressReference
             string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
             // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
@@ -49,7 +53,10 @@ namespace qxlpy
             int y = match_y.Success ? int.Parse(match_y.Value)+1 : 1;
 
             // Check if the cell has a formula
-            if (!xlApp.Cells(y, x).HasFormula) { return; }
+            if (!xlApp.Cells(y, x).HasFormula) {
+                WriteLog("Seleted cell does not have a formula", "WARNING");
+                return;
+            }
 
             // Get formula name
             string cell_formula = xlApp.Cells(y, x).Formula;
@@ -57,18 +64,25 @@ namespace qxlpy
             Match match_f = rgx_f.Match(cell_formula);
 
             if (!match_f.Success) {
+                WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9]+", "WARNING");
                 return;
             }
             string f = match_f.Value;
 
             // Check whether formula is a method of ExcelFunc
             MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
-            if (method_info == null) { return; }
+            if (method_info == null) {
+                WriteLog("The supplied formula is not a QXLPY UDF", "WARNING");
+                return;
+            }
             ParameterInfo[] param_info = method_info.GetParameters();
             int p_len = param_info.Length;
 
             // Cells formatting
             // Title = function name
+            var backtrack = new List<dynamic>();
+            backtrack.Add(xlApp.Cells(y, x));
+            RangeEmpty(xlApp.Cells(y, x + 1), backtrack);
             xlApp.Cells(y, x).Value = f;
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x + 1)).Merge();
@@ -86,14 +100,16 @@ namespace qxlpy
                     // array type
                     ad_row_count += 1;
                     var param_cell = xlApp.Cells(y, x + ad_row_count);
+                    RangeEmpty(param_cell, backtrack);
                     param_cell.Value = param;
-                    sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
                     param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
                     var array_cells = xlApp.Range(
                         xlApp.Cells(y + 1, x + ad_row_count),
                         xlApp.Cells(y + 3, x + ad_row_count)
                     );
+                    RangeEmpty(array_cells, backtrack);
+                    sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     new_formula += array_cells.Address + comma;
                     // grey out cell
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
@@ -101,11 +117,16 @@ namespace qxlpy
                     // str, int, double types
                     new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
                 }
+                RangeEmpty(xlApp.Cells(y + i, x), backtrack);
+                RangeEmpty(xlApp.Cells(y + i, x + 1), backtrack);
                 xlApp.Cells(y + i, x).Value = param;
             }
+            RangeEmpty(xlApp.Cells(y + p_len + 1, x), backtrack);
             xlApp.Cells(y + p_len + 1, x).Value = "return";
-            xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x)).Interior.Color = Color.FromArgb(77, 241, 255, 205);
+            dynamic param_name_range = xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x));
+            param_name_range.Interior.Color = Color.FromArgb(77, 241, 255, 205);
             new_formula += ")";
+            RangeEmpty(xlApp.Cells(y + p_len + 1, x + 1), backtrack);
             xlApp.Cells(y + p_len + 1, x + 1).Value = new_formula;
 
             sheet.Columns(x).Autofit();
@@ -129,6 +150,37 @@ namespace qxlpy
             if (sheet.Columns(x + 1).ColumnWidth > 50) {
                 sheet.Columns(x + 1).ColumnWidth = 50;
             }
+        }
+
+        private void RangeEmpty(dynamic range, List<dynamic> bt)
+        {
+            // if cells in range is not empty, undo all the changes by the func formatter
+            bool cleanup = false;
+            if (range.Value != null) {
+                if (range.Value.GetType().IsArray) {
+                    foreach (var v in range.Value) {
+                        if (v != null) {
+                            cleanup = true;
+                        }
+                    }
+                } else { cleanup = true; }
+            }
+
+            if (cleanup) {
+                foreach (dynamic ea_range in bt) {
+                    ea_range.UnMerge();
+                    ea_range.Clear();
+                }
+                throw new SystemException("Cannot overwrite non-empty cell(s): " + range.Address);
+            }
+            bt.Add(range);
+        }
+
+        private void WriteLog(string logmsg, string level)
+        {
+            // use python logging
+            PyExecutor pye = new();
+            pye.LogMessage(logmsg, level);
         }
     }
 
