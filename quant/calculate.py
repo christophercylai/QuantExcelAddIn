@@ -1,12 +1,12 @@
 from .Calculate import calc
-import quant
+from . import qxlpy_obj
 
 
-def GetCalculate(numlst: list = [1, 2, 3]) -> str:
-    c = calc.Calc(numlst)
+def GetCalculate(dub_list: list) -> str:
+    c = calc.Calc(dub_list)
     addr = id(c)
-    return quant.STORE_OBJ(c)
+    return qxlpy_obj.store_obj(c)
 
 def CalculateAddNum(addr: str) -> float:
-    c = quant.GET_OBJ(addr)
+    c = qxlpy_obj.get_obj(addr)
     return c.add()

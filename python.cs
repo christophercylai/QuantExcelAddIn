@@ -53,23 +53,21 @@ namespace qxlpy
             }
         }
 
-        public string GetCalculate(object[] numlst)
+        public string GetCalculate(object[] dub_list)
         {
             // returns the address of the Calculate py obj
             using (Py.GIL())
             {
-                PyList pylist = new PyList();
-                PyFloat pyf;
-                double num;
+                var pylist = new PyList();
+                double dub;
                 bool parse_ok;
-                foreach (object n in numlst) {
-                    parse_ok = Double.TryParse(n.ToString(), out num);
+                foreach (object n in dub_list) {
+                    parse_ok = Double.TryParse(n.ToString(), out dub);
                     if (!parse_ok) { throw new ArrayTypeMismatchException("Wrong type in array"); }
-                    pyf = new PyFloat(num);
-                    pylist.Append(pyf);
+                    pylist.Append(new PyFloat(dub));
                 }
                 dynamic imp = SCOPE.Import("quant.calculate");
-                string ret = imp.GetCalculate(numlst);
+                string ret = imp.GetCalculate(pylist);
                 return ret;
             }
         }
@@ -81,6 +79,29 @@ namespace qxlpy
             {
                 dynamic imp = SCOPE.Import("quant.calculate");
                 double ret = imp.CalculateAddNum(addr);
+                return ret;
+            }
+        }
+
+        public string StoreStrDict(object[,] objdict)
+        {
+            // returns the address of the Calculate py obj
+            using (Py.GIL())
+            {
+                var pydict = new PyDict();
+                string k, v;
+                bool parse_ok;
+                int dict_len = objdict.GetLength(0);
+                string empty = "ExcelDna.Integration.ExcelEmpty";
+                for (int i = 0; i < dict_len; i++) {
+                    k = objdict[i, 0].ToString();
+                    v = objdict[i, 1].ToString();
+                    parse_ok = k != empty && v != empty ;
+                    if (!parse_ok) { throw new ArrayTypeMismatchException("There is an empty string"); }
+                    pydict[k] = new PyString(v);
+                }
+                dynamic imp = SCOPE.Import("quant.objects");
+                string ret = imp.StoreStrDict(pydict);
                 return ret;
             }
         }

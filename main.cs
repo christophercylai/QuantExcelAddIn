@@ -232,5 +232,16 @@ namespace qxlpy
             double ret = pye.CalculateAddNum(addr);
             return ret;
         }
+
+        [ExcelFunction(Name = "QxlpyStoreStrDict")]
+        public static string QxlpyStoreStrDict(object[,] objdict)
+        {
+            if (objdict[0, 0].ToString() == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
+            PyExecutor pye = new();
+            string ret = pye.StoreStrDict(objdict);
+            return ret;
+        }
     }
 }

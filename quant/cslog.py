@@ -1,4 +1,5 @@
-from . import cs_logger
+from .qxlpy_log import cs_logger
+
 
 def LogMessage(logmsg: str, level: str) -> str:
     loglevels = {
