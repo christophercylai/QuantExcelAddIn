@@ -82,6 +82,7 @@ namespace qxlpy
 
             // Cells formatting
             // Title = function name
+            // backtrack is a record for undo changes in RangeEmpty()
             var backtrack = new List<dynamic>();
             backtrack.Add(xlApp.Cells(y, x));
             RangeEmpty(xlApp.Cells(y, x + 1), backtrack);
@@ -113,7 +114,7 @@ namespace qxlpy
                     RangeEmpty(array_cells, backtrack);
                     sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     new_formula += array_cells.Address + comma;
-                    // grey out cell
+                    // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                 } else {
                     // str, int, double types
@@ -133,7 +134,6 @@ namespace qxlpy
 
             sheet.Columns(x).Autofit();
             sheet.Columns(x + 1).Autofit();
-            //xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Columns.Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
             xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
@@ -175,6 +175,7 @@ namespace qxlpy
                 }
                 bt[0].Value = old_formula;
                 throw new SystemException("Cannot overwrite non-empty cell(s): " + range.Address);
+
             }
             bt.Add(range);
         }
