@@ -88,7 +88,7 @@ namespace qxlpy
             RangeEmpty(xlApp.Cells(y, x + 1), backtrack);
             xlApp.Cells(y, x).Value = f;
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y, x + 1)).Merge();
+            GetRange(y, x, y, x +1).Merge();
 
             // Loop through params and formula
             string new_formula = "=" + f + "(";
@@ -108,9 +108,8 @@ namespace qxlpy
                     param_cell.Value = param;
                     param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
                     param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
-                    var array_cells = xlApp.Range(
-                        xlApp.Cells(y + 1, x + ad_row_count),
-                        xlApp.Cells(y + 3, x + ad_row_count)
+                    var array_cells = GetRange(
+                        y + 1, x + ad_row_count, y + 3, x + ad_row_count
                     );
                     // array cells
                     RangeEmpty(array_cells, backtrack);
@@ -124,18 +123,17 @@ namespace qxlpy
                     RangeEmpty(xlApp.Cells(y, x + ad_row_count + 1), backtrack);
                     RangeEmpty(xlApp.Cells(y, x + ad_row_count + 2), backtrack);
                     xlApp.Cells(y, x + ad_row_count + 1).Value = param;
-                    var param_cell = xlApp.Range(
-                        xlApp.Cells(y, x + ad_row_count + 1),
-                        xlApp.Cells(y, x + ad_row_count + 2)
+                    var param_cell = GetRange(
+                        y, x + ad_row_count + 1, y, x + ad_row_count + 2
                     );
                     param_cell.Merge();
                     param_cell.Interior.Color = Color.FromArgb(60, 255, 255, 202);
                     param_cell.Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
                     // dict cells
-                    var dict_cells = xlApp.Range(
-                        xlApp.Cells(y + 1, x + ad_row_count + 1),
-                        xlApp.Cells(y + 3, x + ad_row_count + 2)
+                    var dict_cells = GetRange(
+                        y + 1, x + ad_row_count + 1,
+                        y + 3, x + ad_row_count + 2
                     );
                     RangeEmpty(dict_cells, backtrack);
                     sheet.Columns(x + ad_row_count + 1).ColumnWidth = 12;
@@ -154,7 +152,7 @@ namespace qxlpy
             }
             RangeEmpty(xlApp.Cells(y + p_len + 1, x), backtrack);
             xlApp.Cells(y + p_len + 1, x).Value = "return";
-            dynamic param_name_range = xlApp.Range(xlApp.Cells(y + 1, x), xlApp.Cells(y + p_len + 1, x));
+            dynamic param_name_range = GetRange(y + 1, x, y + p_len + 1, x);
             param_name_range.Interior.Color = Color.FromArgb(77, 241, 255, 205);
             new_formula += ")";
             RangeEmpty(xlApp.Cells(y + p_len + 1, x + 1), backtrack);
@@ -163,7 +161,7 @@ namespace qxlpy
             sheet.Columns(x).Autofit();
             sheet.Columns(x + 1).Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
-            xlApp.Range(xlApp.Cells(y, x), xlApp.Cells(y + p_len + 1, x + 1)).Borders.Color = Color.FromArgb(0, 0, 0, 0);
+            GetRange(y, x, y + p_len + 1, x + 1).Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
             // Set minimum column width
             if (sheet.Columns(x).ColumnWidth < 12) {
@@ -206,6 +204,13 @@ namespace qxlpy
 
             }
             bt.Add(range);
+        }
+
+        private dynamic GetRange(int y1, int x1, int y2, int x2)
+        {
+            // get the address of a range of cells
+            dynamic xlApp = ExcelDnaUtil.Application;
+            return xlApp.Range(xlApp.Cells(y1, x1), xlApp.Cells(y2, x2));
         }
 
         private void WriteLog(string logmsg, string level)
