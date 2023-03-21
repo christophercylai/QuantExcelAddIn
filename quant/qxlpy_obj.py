@@ -1,3 +1,6 @@
+from quant import py_logger
+
+
 GLOBAL_OBJS = {}
 
 
@@ -13,6 +16,10 @@ def list_objs() -> list:
     return obj_names
 
 def get_obj(obj_name: str):
+    if not obj_name in GLOBAL_OBJS:
+        err = f"{obj_name} does not exist."
+        py_logger.error(err)
+        raise RuntimeError(err)
     return GLOBAL_OBJS[obj_name]
 
 def del_obj(obj_name: str) -> str:

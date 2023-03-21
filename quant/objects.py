@@ -8,6 +8,9 @@ def StoreStrDict(objdict: Dict[str, str]) -> str:
     # <key: str, value: str>
     return qxlpy_obj.store_obj(objdict)
 
+def GetStrDict(obj_name: str) -> Dict[str, str]:
+    return qxlpy_obj.get_obj(obj_name)
+
 # TODO - to be implemented by autogen
 def StoreStrList(objlist: List[str]) -> str:
     return qxlpy_obj.store_obj(objlist)

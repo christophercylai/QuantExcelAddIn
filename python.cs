@@ -122,5 +122,25 @@ namespace qxlpy
                 return ret;
             }
         }
+
+        public Dictionary<string, List<string>> GetStrDict(string obj_name)
+        {
+            // returns a list of stored objects
+            using (Py.GIL())
+            {
+                dynamic imp = SCOPE.Import("quant.objects");
+                PyDict pydict = imp.GetStrDict(obj_name);
+                var keys = new List<string>();
+                var values = new List<string>();
+                foreach (PyObject key in pydict) {
+                    keys.Add(key.ToString());
+                    values.Add(pydict.GetItem(key).ToString());
+                }
+                var ret = new Dictionary<string, List<string>>();
+                ret["keys"] = keys;
+                ret["values"] = values;
+                return ret;
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace qxlpy
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
     {
-        public static string old_formula;
+        public static string? old_formula;
 
         public override string GetCustomUI(string RibbonID)
         {
@@ -195,7 +195,7 @@ namespace qxlpy
                     ea_range.Clear();
                 }
                 bt[0].Value = RibbonController.old_formula;
-                throw new SystemException("Cannot overwrite non-empty cell(s): " + range.Address);
+                throw new ApplicationException("Cannot overwrite non-empty cell(s): " + range.Address);
 
             }
             bt.Add(range);
@@ -299,15 +299,15 @@ namespace qxlpy
         {
             PyExecutor pye = new();
             object[] ret = pye.ListGlobalObjects().ToArray();
-            int l_len = ret.Length;
-            if (l_len == 0) { return "N/A"; }
+            int len = ret.Length;
+            if (len == 0) { return "N/A"; }
 
             int[] ac = ExManip.GetActiveCellPos();
             int y = ac[0];
             int x = ac[1];
 
             dynamic xlApp = ExcelDnaUtil.Application;
-            for (int i = 0; i < l_len; i++) {
+            for (int i = 0; i < len; i++) {
                 var ex_ref = new ExcelReference(y + i, x - 1);
                 string s = ex_ref.GetValue().ToString();
                 if (s != "ExcelDna.Integration.ExcelEmpty") {
@@ -318,7 +318,39 @@ namespace qxlpy
                 s = ret[i].ToString();
                 ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
             }
+            return "SUCCESS";
+        }
 
+        [ExcelFunction(Name = "QxlpyGetStrDict")]
+        public static string QxlpyGetStrDict(string obj_name)
+        {
+            PyExecutor pye = new();
+            Dictionary<string, List<string>> ret = pye.GetStrDict(obj_name);
+            string[][] kv_pair = {
+                ret["keys"].ToArray(),
+                ret["values"].ToArray()
+            };
+            int len = kv_pair[0].Length;
+            if (len == 0) { return "N/A"; }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            dynamic xlApp = ExcelDnaUtil.Application;
+            for (int i = 0; i < len; i++) {
+                for (int j = 0; j < 2; j++) {
+                    var ex_ref = new ExcelReference(y + i, x - 2 + j);
+                    string s = ex_ref.GetValue().ToString();
+                    if (s != "ExcelDna.Integration.ExcelEmpty") {
+                        string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x - 1 + j).Address;
+                        pye.LogMessage(errmsg, "WARNING");
+                        return errmsg;
+                    }
+                    s = kv_pair[j][i].ToString();
+                    ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+                }
+            }
             return "SUCCESS";
         }
     }

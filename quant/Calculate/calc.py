@@ -1,8 +1,10 @@
+from typing import List
+
 from quant import py_logger
 
 
 class Calc:
-    def __init__(self, numlst: list):
+    def __init__(self, numlst: List(float)):
         for n in numlst:
             if not isinstance(n, float) and not isinstance(n, int):
                 err = "Non-float value was supplied in numlist"
