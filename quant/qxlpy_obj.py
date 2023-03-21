@@ -31,6 +31,6 @@ def del_obj(obj_name: str) -> str:
     return ret
 
 def obj_exists(obj_name: str) -> bool:
-    if obj_names in GLOBAL_OBJS.keys():
+    if obj_name in GLOBAL_OBJS.keys():
         return True
     return False

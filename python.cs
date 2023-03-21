@@ -125,7 +125,7 @@ namespace qxlpy
 
         public Dictionary<string, List<string>> GetStrDict(string obj_name)
         {
-            // returns a list of stored objects
+            // returns a dictionary object
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
@@ -139,6 +139,17 @@ namespace qxlpy
                 var ret = new Dictionary<string, List<string>>();
                 ret["keys"] = keys;
                 ret["values"] = values;
+                return ret;
+            }
+        }
+
+        public bool ObjectExists (string obj_name)
+        {
+            // check the existence of an obj
+            using (Py.GIL())
+            {
+                dynamic imp = SCOPE.Import("quant.objects");
+                bool ret = imp.ObjectExists(obj_name);
                 return ret;
             }
         }

@@ -9,6 +9,7 @@ def StoreStrDict(objdict: Dict[str, str]) -> str:
     return qxlpy_obj.store_obj(objdict)
 
 def GetStrDict(obj_name: str) -> Dict[str, str]:
+    # returns a dictionary object
     return qxlpy_obj.get_obj(obj_name)
 
 # TODO - to be implemented by autogen
@@ -24,4 +25,5 @@ def DeleteObject(obj_name: str) -> str:
     return qxlpy_obj.del_obj(obj_name)
 
 def ObjectExists(obj_name: str) -> bool:
+    # check the existence of an obj
     return qxlpy_obj.obj_exists(obj_name)

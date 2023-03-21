@@ -286,9 +286,6 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyStoreStrDict")]
         public static string QxlpyStoreStrDict(object[,] objdict)
         {
-            if (objdict[0, 0].ToString() == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
             PyExecutor pye = new();
             string ret = pye.StoreStrDict(objdict);
             return ret;
@@ -324,6 +321,9 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyGetStrDict")]
         public static string QxlpyGetStrDict(string obj_name)
         {
+            if (obj_name == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
             PyExecutor pye = new();
             Dictionary<string, List<string>> ret = pye.GetStrDict(obj_name);
             string[][] kv_pair = {
@@ -352,6 +352,17 @@ namespace qxlpy
                 }
             }
             return "SUCCESS";
+        }
+
+        [ExcelFunction(Name = "QxlpyObjectExists")]
+        public static bool QxlpyObjectExists(string obj_name)
+        {
+            if (obj_name == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
+            PyExecutor pye = new();
+            bool ret = pye.ObjectExists(obj_name);
+            return ret;
         }
     }
     // END: public static class ExcelFunc
