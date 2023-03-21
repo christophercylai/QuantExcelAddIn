@@ -7,6 +7,7 @@ using System.Reflection;
 
 
 namespace qxlpy
+
 {
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
@@ -240,6 +241,27 @@ namespace qxlpy
 
     public static class ExcelFunc
     {
+        private static void CheckType(object obj)
+        {
+            if (obj.ToString() == "") {
+                throw new ArgumentNullException("Missing Arguments");
+            }
+        }
+
+        private static void ListCheckType(object[] obj)
+        {
+            foreach (object o in obj) {
+                CheckType(o);
+            }
+        }
+
+        private static void DictCheckType(object[,] obj)
+        {
+            foreach (object o in obj) {
+                CheckType(o);
+            }
+        }
+
         [ExcelFunction(Name = "QxlpyGetPath")]
         public static string QxlpyGetPath()
         {
@@ -253,9 +275,8 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyLogMessage")]
         public static string QxlpyLogMessage(string logmsg, string level)
         {
-            if (logmsg == "" || level == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
+            CheckType(logmsg);
+            CheckType(level);
             PyExecutor pye = new();
             string ret = pye.LogMessage(logmsg, level);
             return ret;
@@ -264,9 +285,7 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyGetCalculate")]
         public static string QxlpyGetCalculate(object[] objlist)
         {
-            if (objlist[0].ToString() == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
+            ListCheckType(objlist);
             PyExecutor pye = new();
             string ret = pye.GetCalculate(objlist);
             return ret;
@@ -275,9 +294,7 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyCalculateAddNum")]
         public static double QxlpyCalculateAddNum(string addr)
         {
-            if (addr == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
+            CheckType(addr);
             PyExecutor pye = new();
             double ret = pye.CalculateAddNum(addr);
             return ret;
@@ -286,6 +303,7 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyStoreStrDict")]
         public static string QxlpyStoreStrDict(object[,] objdict)
         {
+            DictCheckType(objdict);
             PyExecutor pye = new();
             string ret = pye.StoreStrDict(objdict);
             return ret;
@@ -321,9 +339,7 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyGetStrDict")]
         public static string QxlpyGetStrDict(string obj_name)
         {
-            if (obj_name == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
+            CheckType(obj_name);
             PyExecutor pye = new();
             Dictionary<string, List<string>> ret = pye.GetStrDict(obj_name);
             string[][] kv_pair = {
@@ -357,9 +373,7 @@ namespace qxlpy
         [ExcelFunction(Name = "QxlpyObjectExists")]
         public static bool QxlpyObjectExists(string obj_name)
         {
-            if (obj_name == "") {
-                throw new ArgumentNullException("Missing Arguments");
-            }
+            CheckType(obj_name);
             PyExecutor pye = new();
             bool ret = pye.ObjectExists(obj_name);
             return ret;
