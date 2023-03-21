@@ -84,12 +84,13 @@ namespace qxlpy
             // Loop through params and formula
             string new_formula = "=" + f + "(";
             int ad_row_count = 1;  // count the rows of array and dict to the right of func name
-            string comma, param;
+            string comma, param, def_value;
             Type param_type;
             for (int i = 1; i <= p_len; i++) {
                 param_type = param_info[i - 1].ParameterType;
                 comma = i == p_len ? "" : ", ";
                 param = param_info[i - 1].Name;
+                def_value = param_info[i - 1].HasDefaultValue ? param_info[i - 1].DefaultValue.ToString() : "";
                 if (param_type.Name.Contains("[]")) {
                     // array type
                     // title cell
@@ -108,6 +109,7 @@ namespace qxlpy
                     new_formula += array_cells.Address + comma;
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
+                    def_value = "";
                 } else if (param_type.Name.Contains("[,]")) {
                     // dict type
                     // title cells
@@ -133,6 +135,7 @@ namespace qxlpy
                     new_formula += dict_cells.Address + comma;
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
+                    def_value = "";
                 } else {
                     // bool, str, int, double types
                     new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
@@ -140,6 +143,9 @@ namespace qxlpy
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x), backtrack);
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x + 1), backtrack);
                 xlApp.Cells(y + i, x).Value = param;
+                if (def_value != "") {
+                    xlApp.Cells(y + i, x + 1).Value = def_value;
+                }
             }
             ExManip.RangeEmpty(xlApp.Cells(y + p_len + 1, x), backtrack);
             xlApp.Cells(y + p_len + 1, x).Value = "return";
@@ -273,7 +279,7 @@ namespace qxlpy
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
         [ExcelFunction(Name = "QxlpyLogMessage")]
-        public static string QxlpyLogMessage(string logmsg, string level)
+        public static string QxlpyLogMessage(string logmsg, string level = "INFO")
         {
             CheckType(logmsg);
             CheckType(level);

@@ -1,7 +1,7 @@
 from .qxlpy_log import cs_logger
 
 
-def LogMessage(logmsg: str, level: str) -> str:
+def LogMessage(logmsg: str, level: str = "INFO") -> str:
     loglevels = {
         "DEBUG": cs_logger.debug,
         "INFO": cs_logger.info,
