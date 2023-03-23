@@ -1,24 +1,25 @@
+# pylint: disable=missing-module-docstring
 from .. import objects as O
 
 
 def test_objects():
+    # pylint: disable=missing-function-docstring
     strdict = {
         "A": "Apple",
         "B": "Bee"
     }
-    d = O.StoreStrDict(strdict)
+    dic = O.StoreStrDict(strdict)
 
     strlist = ["a", "b"]
-    l = O.StoreStrList(strlist)
+    lst = O.StoreStrList(strlist)
 
-    globallist = O.ListGlobalObjects()
-    assert d in O.ListGlobalObjects()
-    assert l in O.ListGlobalObjects()
+    assert dic in O.ListGlobalObjects()
+    assert lst in O.ListGlobalObjects()
 
-    ret = O.GetStrDict(d)
+    ret = O.GetStrDict(dic)
     assert ret["A"] == strdict["A"]
     assert ret["B"] == strdict["B"]
 
-    O.DeleteObject(d)
-    assert O.ObjectExists(l) == True
-    assert O.ObjectExists(d) == False
+    O.DeleteObject(dic)
+    assert O.ObjectExists(lst) is True
+    assert O.ObjectExists(dic) is False
