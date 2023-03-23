@@ -6,6 +6,7 @@
 * dotNet 6.0
 * Python 3.7.9
 * Python.Net 3.0.1
+* Pytest 7.2.2
 * Excel-DNA 1.6.0
 
 ## Python and Visual Studio 2022 Setup
@@ -27,7 +28,8 @@ rm pip.pyz
 .\python.exe -m virtualenv venv ../.venv  # create virtualenv in the github directory
 cd ..
 ./.venv/Scripts/activate
-pip install pythonnet  # all pip packages for this project should be installed under this virtualenv
+pip install pythonnet==3.0.1  # all pip packages for this project should be installed under this virtualenv
+pip install pytest==7.2.2
 ```
 ### Visual Studio (VS) 2022 Setup
 * When installing VS 2022, please install with these 2 modules:
