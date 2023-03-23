@@ -5,6 +5,8 @@ from typing import List, Dict
 
 from . import qxlpy_obj
 
+# pylint: disable=invalid-name
+
 
 def StoreStrDict(objdict: Dict[str, str]) -> str:
     """

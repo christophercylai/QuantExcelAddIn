@@ -3,6 +3,8 @@ Logger for CSharp
 """
 from .qxlpy_log import cs_logger
 
+# pylint: disable=invalid-name
+
 
 def LogMessage(logmsg: str, level: str = "INFO") -> str:
     """

@@ -6,6 +6,8 @@ from typing import List
 from .Calculate import calc
 from . import qxlpy_obj
 
+# pylint: disable=invalid-name
+
 
 def GetCalculate(dub_list: List[float]) -> str:
     """
