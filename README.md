@@ -6,6 +6,8 @@
 * dotNet 6.0
 * Python 3.7.9
 * Python.Net 3.0.1
+* Pytest 7.2.2
+* Pylint 2.17.1
 * Excel-DNA 1.6.0
 
 ## Python and Visual Studio 2022 Setup
@@ -26,8 +28,9 @@ rm pip.pyz
 .\python.exe -m pip install virtualenv
 .\python.exe -m virtualenv venv ../.venv  # create virtualenv in the github directory
 cd ..
-./.venv/Scripts/activate
-pip install pythonnet  # all pip packages for this project should be installed under this virtualenv
+.\.venv\Scripts\activate
+pip install pythonnet==3.0.1  # all pip packages for this project should be installed under this virtualenv
+pip install pytest==7.2.2 pylint==2.17.1
 ```
 ### Visual Studio (VS) 2022 Setup
 * When installing VS 2022, please install with these 2 modules:
@@ -41,6 +44,16 @@ devenv qxlpy.sln
 * Inside VS 2022, open up the `Package Manager Console` and run:
 ```
 NuGet\Install-Package ExcelDna.AddIn -Version 1.6.0
+```
+
+## Pythong Linting and Testing
+* Open up a Powershell and run these commands:
+```
+cd $env:USERPROFILE\github
+.\.venv\Scripts\activate
+cd QuantExcelAddIn
+pylint quant
+pytest
 ```
 
 ## Reference

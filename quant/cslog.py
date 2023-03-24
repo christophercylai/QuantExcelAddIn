@@ -1,7 +1,15 @@
+"""
+Logger for CSharp
+"""
 from .qxlpy_log import cs_logger
+
+# pylint: disable=invalid-name
 
 
 def LogMessage(logmsg: str, level: str = "INFO") -> str:
+    """
+    Log message and return a message to Excel
+    """
     loglevels = {
         "DEBUG": cs_logger.debug,
         "INFO": cs_logger.info,

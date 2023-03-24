@@ -1,3 +1,6 @@
+"""
+qxlpy logging configuration
+"""
 import logging
 from logging import handlers
 from os import getenv
@@ -9,7 +12,10 @@ cs_logger = logging.getLogger('csharp_log')
 
 
 def set_log_level(logger):
-    # set level based on QXLPYLOGLEVEL, default is DEBUG
+    """
+    set logging level for a logger
+    default is DEBUG
+    """
     log_lvl = getenv('QXLPYLOGLEVEL', 'DEBUG')
     loglvldict = {
         'CRITICAL': logging.CRITICAL,
@@ -20,7 +26,11 @@ def set_log_level(logger):
     }
     logger.setLevel(loglvldict[log_lvl])
 
-def add_rotate_handler(logger, log_format: str, log_name: str, mb: int = 20, backup: int = 9):
+def add_rotate_handler(logger, log_format: str, log_name: str, mbyte: int = 20, backup: int = 9):
+    """
+    log handler that rotates a limited number of log files,
+    so that they won't get too big
+    """
     # create log dir
     logdir = Path(__file__).parents[1]
     logdir = Path(logdir, 'Logs')
@@ -30,15 +40,18 @@ def add_rotate_handler(logger, log_format: str, log_name: str, mb: int = 20, bac
     rotate_handler = handlers.RotatingFileHandler(
         filename=str(Path(logdir, log_name)),
         mode='a',
-        maxBytes=1024*1024*mb,
+        maxBytes=1024*1024*mbyte,
         backupCount=backup,
         encoding='ascii'
-    )
+    )  # pylint: disable=line-too-long
     rotate_handler.setFormatter(formatter)
     logger.addHandler(rotate_handler)
 
 
 set_log_level(py_logger)
-add_rotate_handler(py_logger, '%(asctime)s - [%(levelname)s] %(filename)s at line %(lineno)d: %(message)s', 'qxlpy.log')
+add_rotate_handler(
+    py_logger,
+    '%(asctime)s - [%(levelname)s] %(filename)s at line %(lineno)d: %(message)s', 'qxlpy.log'
+)
 set_log_level(cs_logger)
 add_rotate_handler(cs_logger, '%(asctime)s - [%(levelname)s]: %(message)s', 'qxlcs.log')
