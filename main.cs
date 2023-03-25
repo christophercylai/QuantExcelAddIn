@@ -12,10 +12,9 @@ namespace qxlpy
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
     {
-        public static string? old_formula;
-
         public override string GetCustomUI(string RibbonID)
         {
+            // note: onLoad option can be added after customUI to run a method when the ribbon loads
             return @"
       <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui'>
       <ribbon>
@@ -33,6 +32,18 @@ namespace qxlpy
         }
 
         public void OnButtonPressed(IRibbonControl control)
+        {
+            AutoFill.AutoFuncFormat();
+        }
+    }
+    // END: public class RibbonController : ExcelRibbon
+
+
+    public static class AutoFill
+    {
+        public static string? old_formula;
+
+        public static void AutoFuncFormat()
         {
             // Check if there is an active worksheet
             dynamic xlApp = ExcelDnaUtil.Application;
@@ -177,7 +188,7 @@ namespace qxlpy
             }
         }
     }
-    // END: public class RibbonController : ExcelRibbon
+    // END: public static clase AutoFill
 
 
     public static class ExManip
@@ -201,7 +212,7 @@ namespace qxlpy
                     ea_range.UnMerge();
                     ea_range.Clear();
                 }
-                bt[0].Value = RibbonController.old_formula;
+                bt[0].Value = AutoFill.old_formula;
                 throw new ApplicationException("Cannot overwrite non-empty cell(s): " + range.Address);
 
             }
@@ -266,6 +277,12 @@ namespace qxlpy
             foreach (object o in obj) {
                 CheckType(o);
             }
+        }
+
+        [ExcelCommand(Name = "MyTestCommand", ShortCut = "^{INSERT}")]
+        public static void testcommand()
+        {
+            AutoFill.AutoFuncFormat();
         }
 
         [ExcelFunction(Name = "QxlpyGetPath")]
