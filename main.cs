@@ -43,23 +43,25 @@ namespace qxlpy
     {
         public static string? old_formula;
 
-        public static void AutoFuncFormat()
+        private static bool SheetExists()
         {
             // Check if there is an active worksheet
             dynamic xlApp = ExcelDnaUtil.Application;
             var sheet = xlApp.ActiveSheet;
             if (sheet == null) {
                 ExManip.WriteLog("There is no active sheet", "WARNING");
-                return;
+                return false;
             }
+            return true;
+        }
 
-            int[] ac = ExManip.GetActiveCellPos();
-            int y = ac[0];
-            int x = ac[1];
+        private static string FormulaExists(int x, int y)
+        {
             // Check if the cell has a formula
+            dynamic xlApp = ExcelDnaUtil.Application;
             if (!xlApp.Cells(y, x).HasFormula) {
                 ExManip.WriteLog("Seleted cell does not have a formula", "WARNING");
-                return;
+                return "";
             }
 
             // Get formula name
@@ -69,16 +71,39 @@ namespace qxlpy
 
             if (!match_f.Success) {
                 ExManip.WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9]+", "WARNING");
+                return "";
+            }
+
+            // Check whether formula is a method of ExcelFunc
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(match_f.Value);
+            if (method_info == null) {
+                ExManip.WriteLog("The supplied formula is not a QXLPY UDF", "WARNING");
+                return "";
+            }
+
+            return match_f.Value;
+        }
+
+        public static void AutoFuncFormat()
+        {
+            // auto format a UDF from ExcelFunc
+            dynamic xlApp = ExcelDnaUtil.Application;
+            if (!SheetExists()) {
                 return;
             }
-            string f = match_f.Value;
+
+            var sheet = xlApp.ActiveSheet;
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
 
             // Check whether formula is a method of ExcelFunc
             MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
-            if (method_info == null) {
-                ExManip.WriteLog("The supplied formula is not a QXLPY UDF", "WARNING");
-                return;
-            }
             ParameterInfo[] param_info = method_info.GetParameters();
             int p_len = param_info.Length;
 
@@ -187,6 +212,24 @@ namespace qxlpy
                 sheet.Columns(x + 1).ColumnWidth = 50;
             }
         }
+
+        public static void AutoFuncClear() {
+            // auto format a UDF from ExcelFunc
+            dynamic xlApp = ExcelDnaUtil.Application;
+            if (!SheetExists()) {
+                return;
+            }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
+
+        }
     }
     // END: public static clase AutoFill
 
@@ -279,10 +322,16 @@ namespace qxlpy
             }
         }
 
-        [ExcelCommand(Name = "MyTestCommand", ShortCut = "^{INSERT}")]
-        public static void testcommand()
+        [ExcelCommand(Name = "autoformat", ShortCut = "^{INSERT}")]
+        public static void AutoFormat()
         {
             AutoFill.AutoFuncFormat();
+        }
+
+        [ExcelCommand(Name = "autoclear", ShortCut = "^{DELETE}")]
+        public static void AutoClear()
+        {
+            AutoFill.AutoFuncClear();
         }
 
         [ExcelFunction(Name = "QxlpyGetPath")]
