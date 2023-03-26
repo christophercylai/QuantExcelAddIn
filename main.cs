@@ -236,9 +236,9 @@ namespace qxlpy
             }
         }
 
-        public static void AutoDataClear() {
-            // auto clear a UDF from ExcelFunc
-            dynamic xlApp = ExcelDnaUtil.Application;
+        public static void AutoDataClear()
+        {
+            // auto clear data from ExcelFunc's UDF
             if (!SheetExists()) {
                 return;
             }
@@ -254,6 +254,47 @@ namespace qxlpy
 
             ExcelFunc.ClearData(x, y);
             ExcelFunc.ClearData(x - 1, y);
+        }
+
+        public static void AutoFuncClear()
+        {
+            // auto clear UDF
+            if (!SheetExists()) {
+                return;
+            }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
+
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
+            ParameterInfo[] param_info = method_info.GetParameters();
+
+            // clear single cell parameters
+            int p_size = param_info.Length;
+            for (int i = 0; i < p_size + 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    ExcelFunc.ClearCell(new ExcelReference(y - i - 1, x - 1 - j));
+                }
+            }
+
+            // clear array and dict parameters
+            int top_y = y - p_size + 1;
+            int top_x = x - 1;
+            string array = "[]";
+            foreach (var p in param_info) {
+                Type t = p.ParameterType;
+                if (array in t.Name) {
+                    //array
+                    top_x += 1;
+                    ExcelFunc.ClearCell(new ExcelReference(top_y, top_x));
+                }
+            }
         }
     }
     // END: public static clase AutoFill
@@ -326,6 +367,14 @@ namespace qxlpy
 
     public static class ExcelFunc
     {
+        public static void ClearCell(ExcelReference ex_ref)
+        {
+            ExcelAsyncUtil.QueueAsMacro(() => {
+                XlCall.Excel(XlCall.xlcSelect, ex_ref);
+                XlCall.Excel(XlCall.xlcClear, 1);
+            });
+        }
+
         public static void ClearData(int x, int y) {
             // clean up old data
             dynamic xlApp = ExcelDnaUtil.Application;
@@ -337,11 +386,7 @@ namespace qxlpy
                     addr.Font.Size == 9 &&
                     addr.Font.Italic)
                 {
-                    var ex_ref = new ExcelReference(y + cell_count, x - 1);
-                    ExcelAsyncUtil.QueueAsMacro(() => {
-                        XlCall.Excel(XlCall.xlcSelect, ex_ref);
-                        XlCall.Excel(XlCall.xlcClear, 1);
-                    });
+                    ClearCell(new ExcelReference(y + cell_count, x - 1));
                 } else {
                     data_formatted = false;
                 }
@@ -388,10 +433,27 @@ namespace qxlpy
             AutoFill.AutoFuncFormat();
         }
 
-        [ExcelCommand(Name = "autoclear", ShortCut = "^{DELETE}")]
-        public static void AutoClear()
+        [ExcelCommand(Name = "dataclear", ShortCut = "^{DELETE}")]
+        public static void DataClear()
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+            dynamic r = xlApp.ActiveCell;
+            AutoFill.AutoDataClear();
+            // re-focus on the formula cell
+            r.Activate();
+        }
+
+        [ExcelCommand(Name = "allclear", ShortCut = "^+{DELETE}")]
+        public static void AllClear()
         {
             AutoFill.AutoDataClear();
+            AutoFill.AutoFuncClear();
+        }
+
+        [ExcelCommand(Name = "funcclear", ShortCut = "^+D")]
+        public static void FuncClear()
+        {
+            AutoFill.AutoFuncClear();
         }
 
         [ExcelFunction(Name = "QxlpyGetPath")]
