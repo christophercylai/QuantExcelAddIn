@@ -16,7 +16,7 @@ namespace qxlpy
         public override string GetCustomUI(string RibbonID)
         {
             return @"
-      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='DisableAutoCalculate'>
+      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='OnLoad'>
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
@@ -31,7 +31,7 @@ namespace qxlpy
     </customUI>";
         }
 
-        public void DisableAutoCalculate(IRibbonUI ribbon)
+        public void OnLoad(IRibbonUI ribbon)
         {
             dynamic xlApp = ExcelDnaUtil.Application;
         }
@@ -90,11 +90,11 @@ namespace qxlpy
 
             // Get formula name
             old_formula = xlApp.Cells(y, x).Formula;
-            var rgx_f = new Regex(@"[a-zA-Z][a-zA-Z0-9]+");
+            var rgx_f = new Regex(@"[a-zA-Z][a-zA-Z0-9_]+");
             Match match_f = rgx_f.Match(old_formula);
 
             if (!match_f.Success) {
-                ExManip.WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9]+", "WARNING");
+                ExManip.WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9_]+", "WARNING");
                 return "";
             }
 
@@ -251,7 +251,9 @@ namespace qxlpy
             if (f == "") {
                 return;
             }
+
             ExcelFunc.ClearData(x, y);
+            ExcelFunc.ClearData(x - 1, y);
         }
     }
     // END: public static clase AutoFill
