@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Drawing;
 using System.Reflection;
+using Excel = Microsoft.Office.Interop.Excel;
 
 
 namespace qxlpy
@@ -14,9 +15,8 @@ namespace qxlpy
     {
         public override string GetCustomUI(string RibbonID)
         {
-            // note: onLoad option can be added after customUI to run a method when the ribbon loads
             return @"
-      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui'>
+      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='DisableAutoCalculate'>
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
@@ -31,6 +31,11 @@ namespace qxlpy
     </customUI>";
         }
 
+        public void DisableAutoCalculate(IRibbonUI ribbon)
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+        }
+
         public void OnButtonPressed(IRibbonControl control)
         {
             AutoFill.AutoFuncFormat();
@@ -38,6 +43,25 @@ namespace qxlpy
     }
     // END: public class RibbonController : ExcelRibbon
 
+
+    public class AutoRun : IExcelAddIn
+    {
+        public void AutoOpen()
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+            xlApp.WorkbookActivate += new Excel.AppEvents_WorkbookActivateEventHandler(AppWbActivate);
+        }
+
+        public void AutoClose() {}
+
+        private void AppWbActivate(Excel.Workbook Wb)
+        {
+            // disable auto calculate
+            dynamic xlApp = ExcelDnaUtil.Application;
+            xlApp.Calculation = -4135;
+            xlApp.CalculateBeforeSave = false;
+        }
+    }
 
     public static class AutoFill
     {
@@ -102,7 +126,6 @@ namespace qxlpy
                 return;
             }
 
-            // Check whether formula is a method of ExcelFunc
             MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
             ParameterInfo[] param_info = method_info.GetParameters();
             int p_len = param_info.Length;
@@ -213,8 +236,8 @@ namespace qxlpy
             }
         }
 
-        public static void AutoFuncClear() {
-            // auto format a UDF from ExcelFunc
+        public static void AutoDataClear() {
+            // auto clear a UDF from ExcelFunc
             dynamic xlApp = ExcelDnaUtil.Application;
             if (!SheetExists()) {
                 return;
@@ -228,7 +251,7 @@ namespace qxlpy
             if (f == "") {
                 return;
             }
-
+            ExcelFunc.ClearData(x, y);
         }
     }
     // END: public static clase AutoFill
@@ -301,6 +324,29 @@ namespace qxlpy
 
     public static class ExcelFunc
     {
+        public static void ClearData(int x, int y) {
+            // clean up old data
+            dynamic xlApp = ExcelDnaUtil.Application;
+            bool data_formatted = true;
+            int cell_count = 0;
+            while (data_formatted) {
+                dynamic addr = xlApp.Cells(y + cell_count + 1, x);
+                if (addr.Font.Name == "Courier New" &&
+                    addr.Font.Size == 9 &&
+                    addr.Font.Italic)
+                {
+                    var ex_ref = new ExcelReference(y + cell_count, x - 1);
+                    ExcelAsyncUtil.QueueAsMacro(() => {
+                        XlCall.Excel(XlCall.xlcSelect, ex_ref);
+                        XlCall.Excel(XlCall.xlcClear, 1);
+                    });
+                } else {
+                    data_formatted = false;
+                }
+                cell_count += 1;
+            }
+        }
+
         private static void CheckType(object obj)
         {
             if (obj.ToString() == "") {
@@ -322,6 +368,18 @@ namespace qxlpy
             }
         }
 
+        private static void FillDataCell(ExcelReference ex_ref, string s)
+        {
+            ExcelAsyncUtil.QueueAsMacro(() => {
+                // select ex_ref as active
+                XlCall.Excel(XlCall.xlcSelect, ex_ref);
+                XlCall.Excel(XlCall.xlcFormatFont, "Courier New", 9, false, true);
+                XlCall.Excel(XlCall.xlcPatterns, 1, 35, 1);
+                XlCall.Excel(XlCall.xlcBorder, 1);
+                ex_ref.SetValue(s);
+            });
+        }
+
         [ExcelCommand(Name = "autoformat", ShortCut = "^{INSERT}")]
         public static void AutoFormat()
         {
@@ -331,7 +389,7 @@ namespace qxlpy
         [ExcelCommand(Name = "autoclear", ShortCut = "^{DELETE}")]
         public static void AutoClear()
         {
-            AutoFill.AutoFuncClear();
+            AutoFill.AutoDataClear();
         }
 
         [ExcelFunction(Name = "QxlpyGetPath")]
@@ -394,16 +452,18 @@ namespace qxlpy
             int x = ac[1];
 
             dynamic xlApp = ExcelDnaUtil.Application;
+            // fill values
             for (int i = 0; i < len; i++) {
                 var ex_ref = new ExcelReference(y + i, x - 1);
                 string s = ex_ref.GetValue().ToString();
+                string addr = xlApp.Cells(y + i + 1, x).Address;
                 if (s != "ExcelDna.Integration.ExcelEmpty") {
-                    string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x).Address;
+                    string errmsg = $@"Cannot overwrite non-empty cell(s): {addr}";
                     pye.LogMessage(errmsg, "WARNING");
                     return errmsg;
                 }
                 s = ret[i].ToString();
-                ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+                FillDataCell(ex_ref, s);
             }
             return "SUCCESS";
         }
@@ -436,7 +496,7 @@ namespace qxlpy
                         return errmsg;
                     }
                     s = kv_pair[j][i].ToString();
-                    ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+                    FillDataCell(ex_ref, s);
                 }
             }
             return "SUCCESS";
