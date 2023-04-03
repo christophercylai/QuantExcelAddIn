@@ -22,8 +22,11 @@ namespace qxlpy
           <tab id='qxltab' label='QXLPY'>
             <group id='qxlpy' label='QXLPY'>
               <button id='expandfunc' label='Expand Function'
-                onAction='OnButtonPressed' size='large'
+                onAction='expandFuncButton' size='large' screentip='Expand Function (Ctrl-INS)'
                 imageMso='ConditionalFormattingColorScalesGallery' />
+              <button id='removefunc' label='Remove Function'
+                onAction='removeFuncButton' size='large' screentip='Remove Function (Ctrl-Shift-DEL)'
+                imageMso='TableDelete' />
             </group >
           </tab>
         </tabs>
@@ -36,9 +39,15 @@ namespace qxlpy
             dynamic xlApp = ExcelDnaUtil.Application;
         }
 
-        public void OnButtonPressed(IRibbonControl control)
+        public void expandFuncButton(IRibbonControl control)
         {
             AutoFill.AutoFuncFormat();
+        }
+
+        public void removeFuncButton(IRibbonControl control)
+        {
+            AutoFill.AutoDataClear();
+            AutoFill.AutoFuncClear();
         }
     }
     // END: public class RibbonController : ExcelRibbon
