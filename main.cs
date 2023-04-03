@@ -163,7 +163,6 @@ namespace qxlpy
                         y + 1, x + ad_row_count, y + 3, x + ad_row_count
                     );
                     // array cells
-                    ExManip.RangeEmpty(array_cells, backtrack);
                     sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     new_formula += array_cells.Address + comma;
                     // grey out unused cell right to param name
@@ -187,7 +186,6 @@ namespace qxlpy
                         y + 1, x + ad_row_count + 1,
                         y + 3, x + ad_row_count + 2
                     );
-                    ExManip.RangeEmpty(dict_cells, backtrack);
                     sheet.Columns(x + ad_row_count + 1).ColumnWidth = 12;
                     sheet.Columns(x + ad_row_count + 2).ColumnWidth = 12;
                     ad_row_count += 2;
