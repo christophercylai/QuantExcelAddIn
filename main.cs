@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Drawing;
 using System.Reflection;
+using Excel = Microsoft.Office.Interop.Excel;
 
 
 namespace qxlpy
@@ -12,19 +13,20 @@ namespace qxlpy
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
     {
-        public static string? old_formula;
-
         public override string GetCustomUI(string RibbonID)
         {
             return @"
-      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui'>
+      <customUI xmlns='http://schemas.microsoft.com/office/2009/07/customui' onLoad='OnLoad'>
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
             <group id='qxlpy' label='QXLPY'>
               <button id='expandfunc' label='Expand Function'
-                onAction='OnButtonPressed' size='large'
+                onAction='expandFuncButton' size='large' screentip='Expand Function (Ctrl-INS)'
                 imageMso='ConditionalFormattingColorScalesGallery' />
+              <button id='removefunc' label='Remove Function'
+                onAction='removeFuncButton' size='large' screentip='Remove Function (Ctrl-Shift-DEL)'
+                imageMso='TableDelete' />
             </group >
           </tab>
         </tabs>
@@ -32,42 +34,108 @@ namespace qxlpy
     </customUI>";
         }
 
-        public void OnButtonPressed(IRibbonControl control)
+        public void OnLoad(IRibbonUI ribbon)
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+        }
+
+        public void expandFuncButton(IRibbonControl control)
+        {
+            AutoFill.AutoFuncFormat();
+        }
+
+        public void removeFuncButton(IRibbonControl control)
+        {
+            AutoFill.AutoDataClear();
+            AutoFill.AutoFuncClear();
+        }
+    }
+    // END: public class RibbonController : ExcelRibbon
+
+
+    public class AutoRun : IExcelAddIn
+    {
+        public void AutoOpen()
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+            xlApp.WorkbookActivate += new Excel.AppEvents_WorkbookActivateEventHandler(AppWbActivate);
+        }
+
+        public void AutoClose() {}
+
+        private void AppWbActivate(Excel.Workbook Wb)
+        {
+            // disable auto calculate
+            dynamic xlApp = ExcelDnaUtil.Application;
+            xlApp.Calculation = -4135;
+            xlApp.CalculateBeforeSave = false;
+        }
+    }
+
+    public static class AutoFill
+    {
+        public static string? old_formula;
+
+        private static bool SheetExists()
         {
             // Check if there is an active worksheet
             dynamic xlApp = ExcelDnaUtil.Application;
             var sheet = xlApp.ActiveSheet;
             if (sheet == null) {
                 ExManip.WriteLog("There is no active sheet", "WARNING");
-                return;
+                return false;
             }
+            return true;
+        }
 
-            int[] ac = ExManip.GetActiveCellPos();
-            int y = ac[0];
-            int x = ac[1];
+        private static string FormulaExists(int x, int y)
+        {
             // Check if the cell has a formula
+            dynamic xlApp = ExcelDnaUtil.Application;
             if (!xlApp.Cells(y, x).HasFormula) {
                 ExManip.WriteLog("Seleted cell does not have a formula", "WARNING");
-                return;
+                return "";
             }
 
             // Get formula name
             old_formula = xlApp.Cells(y, x).Formula;
-            var rgx_f = new Regex(@"[a-zA-Z][a-zA-Z0-9]+");
+            var rgx_f = new Regex(@"[a-zA-Z][a-zA-Z0-9_]+");
             Match match_f = rgx_f.Match(old_formula);
 
             if (!match_f.Success) {
-                ExManip.WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9]+", "WARNING");
-                return;
+                ExManip.WriteLog("Formula must start with [a-zA-Z] and followed by [a-zA-Z0-9_]+", "WARNING");
+                return "";
             }
-            string f = match_f.Value;
 
             // Check whether formula is a method of ExcelFunc
-            MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(match_f.Value);
             if (method_info == null) {
                 ExManip.WriteLog("The supplied formula is not a QXLPY UDF", "WARNING");
+                return "";
+            }
+
+            return match_f.Value;
+        }
+
+        public static void AutoFuncFormat()
+        {
+            // auto format a UDF from ExcelFunc
+            dynamic xlApp = ExcelDnaUtil.Application;
+            if (!SheetExists()) {
                 return;
             }
+
+            var sheet = xlApp.ActiveSheet;
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
+
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
             ParameterInfo[] param_info = method_info.GetParameters();
             int p_len = param_info.Length;
 
@@ -85,10 +153,10 @@ namespace qxlpy
             string new_formula = "=" + f + "(";
             int ad_row_count = 1;  // count the rows of array and dict to the right of func name
             string comma, param, def_value;
+            comma = ", ";
             Type param_type;
-            for (int i = 1; i <= p_len; i++) {
+            for (int i = 1; i < p_len; i++) {
                 param_type = param_info[i - 1].ParameterType;
-                comma = i == p_len ? "" : ", ";
                 param = param_info[i - 1].Name;
                 def_value = param_info[i - 1].HasDefaultValue ? param_info[i - 1].DefaultValue.ToString() : "";
                 if (param_type.Name.Contains("[]")) {
@@ -104,7 +172,6 @@ namespace qxlpy
                         y + 1, x + ad_row_count, y + 3, x + ad_row_count
                     );
                     // array cells
-                    ExManip.RangeEmpty(array_cells, backtrack);
                     sheet.Columns(x + ad_row_count).ColumnWidth = 12;
                     new_formula += array_cells.Address + comma;
                     // grey out unused cell right to param name
@@ -128,7 +195,6 @@ namespace qxlpy
                         y + 1, x + ad_row_count + 1,
                         y + 3, x + ad_row_count + 2
                     );
-                    ExManip.RangeEmpty(dict_cells, backtrack);
                     sheet.Columns(x + ad_row_count + 1).ColumnWidth = 12;
                     sheet.Columns(x + ad_row_count + 2).ColumnWidth = 12;
                     ad_row_count += 2;
@@ -147,18 +213,20 @@ namespace qxlpy
                     xlApp.Cells(y + i, x + 1).Value = def_value;
                 }
             }
+
             ExManip.RangeEmpty(xlApp.Cells(y + p_len + 1, x), backtrack);
-            xlApp.Cells(y + p_len + 1, x).Value = "return";
-            dynamic param_name_range = ExManip.GetRange(y + 1, x, y + p_len + 1, x);
+            xlApp.Cells(y + p_len, x).Value = "return";
+            dynamic param_name_range = ExManip.GetRange(y + 1, x, y + p_len, x);
             param_name_range.Interior.Color = Color.FromArgb(77, 241, 255, 205);
-            new_formula += ")";
-            ExManip.RangeEmpty(xlApp.Cells(y + p_len + 1, x + 1), backtrack);
-            xlApp.Cells(y + p_len + 1, x + 1).Value = new_formula;
+
+            dynamic nf_range = xlApp.Cells(y + p_len, x + 1);
+            new_formula += "CELL(\"address\", " + nf_range.Address + "))";
+            ExManip.RangeEmpty(nf_range, backtrack);
 
             sheet.Columns(x).Autofit();
             sheet.Columns(x + 1).Autofit();
             // border weight must be -4138 (just omit), 1, 2, 4
-            ExManip.GetRange(y, x, y + p_len + 1, x + 1).Borders.Color = Color.FromArgb(0, 0, 0, 0);
+            ExManip.GetRange(y, x, y + p_len, x + 1).Borders.Color = Color.FromArgb(0, 0, 0, 0);
 
             // Set minimum column width
             if (sheet.Columns(x).ColumnWidth < 12) {
@@ -175,9 +243,104 @@ namespace qxlpy
             if (sheet.Columns(x + 1).ColumnWidth > 50) {
                 sheet.Columns(x + 1).ColumnWidth = 50;
             }
+            nf_range.Value = new_formula;
+        }
+
+        public static void AutoDataClear()
+        {
+            // auto clear data from ExcelFunc's UDF
+            if (!SheetExists()) {
+                return;
+            }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
+
+            ExcelFunc.ClearData(x, y);
+            ExcelFunc.ClearData(x - 1, y);
+        }
+
+        public static void AutoFuncClear()
+        {
+            // auto clear UDF
+            if (!SheetExists()) {
+                return;
+            }
+
+            int[] ac = ExManip.GetActiveCellPos();
+            int y = ac[0];
+            int x = ac[1];
+
+            string f = FormulaExists(x, y);
+            if (f == "") {
+                return;
+            }
+
+            MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
+            ParameterInfo[] param_info = method_info.GetParameters();
+
+            // clear single cell parameters
+            int p_size = param_info.Length - 1;
+            for (int i = 0; i < p_size + 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    ExcelFunc.ClearCell(new ExcelReference(y - i - 1, x - 1 - j));
+                }
+            }
+
+            // parse out ranges of inputs from formula
+            dynamic xlApp = ExcelDnaUtil.Application;
+            var rgx_f = new Regex(@"[$]?[A-Z]+[$]?[0-9]+:[$]?[A-Z]+[$]?[0-9]+");
+            MatchCollection pos_matches = rgx_f.Matches(old_formula);
+            // in a val_ranges item, the key is [1,1] and value is [2,2] (if the range is R1C1:R2C2)
+            var val_ranges = new Dictionary<int[], int[]>();
+            foreach (Match m in pos_matches) {
+                string ms = m.Value;
+                string cell_addr = xlApp.Range(ms).Address(false, false, XlCall.xlcA1R1c1);
+                string[] addrs = cell_addr.Split(':');
+                int[] ac_0 = ExManip.GetCellPos(addrs[0]);
+                int[] ac_1 = ExManip.GetCellPos(addrs[1]);
+                val_ranges.Add(ac_0, ac_1);
+            }
+
+            // clear array and dict parameters
+            int top_y = y - p_size - 2;
+            int top_x = x - 1;
+            foreach (var p in param_info) {
+                Type t = p.ParameterType;
+                if (t.Name.Contains("[]")) {
+                    // array
+                    top_x += 1;
+                    ExcelFunc.ClearCell(new ExcelReference(top_y, top_x));
+                    foreach (KeyValuePair<int[], int[]> item in val_ranges) {
+                        if (item.Key[0] - 1 == top_y + 1 && item.Value[1] - 1 == top_x) {
+                            ExcelFunc.ClearCell(new ExcelReference(
+                                item.Key[0] - 1, item.Value[0] - 1, item.Key[1] - 1, item.Value[1] - 1
+                            ));
+                        }
+                    }
+                } else if (t.Name.Contains("[,]")) {
+                    // dict
+                    top_x += 1;
+                    ExcelFunc.ClearCell(new ExcelReference(top_y, top_y, top_x, top_x + 1));
+                    foreach (KeyValuePair<int[], int[]> item in val_ranges) {
+                        if (item.Key[0] - 1 == top_y + 1 && item.Value[1]- 1 == top_x + 1) {
+                            ExcelFunc.ClearCell(new ExcelReference(
+                                item.Key[0] - 1, item.Value[0] - 1, item.Key[1] - 1, item.Value[1] - 1
+                            ));
+                        }
+                    }
+                    top_x += 1;
+                }
+            }
         }
     }
-    // END: public class RibbonController : ExcelRibbon
+    // END: public static clase AutoFill
 
 
     public static class ExManip
@@ -201,7 +364,7 @@ namespace qxlpy
                     ea_range.UnMerge();
                     ea_range.Clear();
                 }
-                bt[0].Value = RibbonController.old_formula;
+                bt[0].Value = AutoFill.old_formula;
                 throw new ApplicationException("Cannot overwrite non-empty cell(s): " + range.Address);
 
             }
@@ -222,13 +385,8 @@ namespace qxlpy
             pye.LogMessage(logmsg, level);
         }
 
-        public static int[] GetActiveCellPos()
+        public static int[] GetCellPos(string cell_addr)
         {
-            // Get numeric cell address
-            dynamic xlApp = ExcelDnaUtil.Application;
-
-            // RomAbsolute=false, ColumnAbsolute=false, AddressReference
-            string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
             // Range A1 = RC, A2 = RC[1], B1 = R[1]C, B2 = R[1]C[1] ...
             // Cells A1 = 1, 1
             // Cells(Row, Column)
@@ -241,35 +399,114 @@ namespace qxlpy
 
             return new int[] {y, x};
         }
+
+        public static int[] GetActiveCellPos()
+        {
+            // Get numeric cell address
+            dynamic xlApp = ExcelDnaUtil.Application;
+
+            // RomAbsolute=false, ColumnAbsolute=false, AddressReference
+            string cell_addr = xlApp.ActiveCell.Address(false, false, XlCall.xlcA1R1c1);
+            int[] ac = ExManip.GetCellPos(cell_addr);
+            return ac;
+        }
     }
     // END: public static class ExManip
 
 
     public static class ExcelFunc
     {
-        private static void CheckType(object obj)
+        public static void ClearCell(ExcelReference ex_ref)
+        {
+            ExcelAsyncUtil.QueueAsMacro(() => {
+                XlCall.Excel(XlCall.xlcSelect, ex_ref);
+                XlCall.Excel(XlCall.xlcClear, 1);
+            });
+        }
+
+        public static void ClearData(int x, int y) {
+            // clean up old data
+            dynamic xlApp = ExcelDnaUtil.Application;
+            bool data_formatted = true;
+            int cell_count = 0;
+            while (data_formatted) {
+                dynamic addr = xlApp.Cells(y + cell_count + 1, x);
+                if (addr.Font.Name == "Courier New" &&
+                    addr.Font.Size == 9 &&
+                    addr.Font.Italic)
+                {
+                    ClearCell(new ExcelReference(y + cell_count, x - 1));
+                } else {
+                    data_formatted = false;
+                }
+                cell_count += 1;
+            }
+        }
+
+        private static void CheckEmpty(object obj)
         {
             if (obj.ToString() == "") {
                 throw new ArgumentNullException("Missing Arguments");
             }
         }
 
-        private static void ListCheckType(object[] obj)
+        private static void ListCheckEmpty(object[] obj)
         {
             foreach (object o in obj) {
-                CheckType(o);
+                CheckEmpty(o);
             }
         }
 
-        private static void DictCheckType(object[,] obj)
+        private static void DictCheckEmpty(object[,] obj)
         {
             foreach (object o in obj) {
-                CheckType(o);
+                CheckEmpty(o);
             }
+        }
+
+        private static void FillDataCell(ExcelReference ex_ref, string s)
+        {
+            ExcelAsyncUtil.QueueAsMacro(() => {
+                // select ex_ref as active
+                XlCall.Excel(XlCall.xlcSelect, ex_ref);
+                XlCall.Excel(XlCall.xlcFormatFont, "Courier New", 9, false, true);
+                XlCall.Excel(XlCall.xlcPatterns, 1, 35, 1);
+                XlCall.Excel(XlCall.xlcBorder, 1);
+                ex_ref.SetValue(s);
+            });
+        }
+
+        [ExcelCommand(Name = "autoformat", ShortCut = "^{INSERT}")]
+        public static void AutoFormat()
+        {
+            AutoFill.AutoFuncFormat();
+        }
+
+        [ExcelCommand(Name = "dataclear", ShortCut = "^{DELETE}")]
+        public static void DataClear()
+        {
+            dynamic xlApp = ExcelDnaUtil.Application;
+            dynamic r = xlApp.ActiveCell;
+            AutoFill.AutoDataClear();
+            // re-focus on the formula cell
+            r.Activate();
+        }
+
+        [ExcelCommand(Name = "allclear", ShortCut = "^+{DELETE}")]
+        public static void AllClear()
+        {
+            AutoFill.AutoDataClear();
+            AutoFill.AutoFuncClear();
+        }
+
+        [ExcelCommand(Name = "funcclear", ShortCut = "+{DELETE}")]
+        public static void FuncClear()
+        {
+            AutoFill.AutoFuncClear();
         }
 
         [ExcelFunction(Name = "QxlpyGetPath")]
-        public static string QxlpyGetPath()
+        public static string QxlpyGetPath(string func_pos = "")
         {
             PyExecutor pye = new();
             string path = pye.GetPath();
@@ -279,73 +516,78 @@ namespace qxlpy
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
         [ExcelFunction(Name = "QxlpyLogMessage")]
-        public static string QxlpyLogMessage(string logmsg, string level = "INFO")
+        public static string QxlpyLogMessage(string logmsg, string level = "INFO", string func_pos = "")
         {
-            CheckType(logmsg);
-            CheckType(level);
+            CheckEmpty(logmsg);
+            CheckEmpty(level);
             PyExecutor pye = new();
             string ret = pye.LogMessage(logmsg, level);
             return ret;
         }
 
         [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate(object[] objlist)
+        public static string QxlpyGetCalculate(object[] objlist, string func_pos = "")
         {
-            ListCheckType(objlist);
+            ListCheckEmpty(objlist);
             PyExecutor pye = new();
             string ret = pye.GetCalculate(objlist);
             return ret;
         }
 
         [ExcelFunction(Name = "QxlpyCalculateAddNum")]
-        public static double QxlpyCalculateAddNum(string addr)
+        public static double QxlpyCalculateAddNum(string addr, string func_pos = "")
         {
-            CheckType(addr);
+            CheckEmpty(addr);
             PyExecutor pye = new();
             double ret = pye.CalculateAddNum(addr);
             return ret;
         }
 
         [ExcelFunction(Name = "QxlpyStoreStrDict")]
-        public static string QxlpyStoreStrDict(object[,] objdict)
+        public static string QxlpyStoreStrDict(object[,] objdict, string func_pos = "")
         {
-            DictCheckType(objdict);
+            DictCheckEmpty(objdict);
             PyExecutor pye = new();
             string ret = pye.StoreStrDict(objdict);
             return ret;
         }
 
         [ExcelFunction(Name = "QxlpyListGlobalObjects")]
-        public static string QxlpyListGlobalObjects()
+        public static string QxlpyListGlobalObjects(string func_pos = "")
         {
+            CheckEmpty(func_pos);
             PyExecutor pye = new();
             object[] ret = pye.ListGlobalObjects().ToArray();
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
 
-            int[] ac = ExManip.GetActiveCellPos();
+            dynamic xlApp = ExcelDnaUtil.Application;
+            string cell_addr = xlApp.Range(func_pos).Address(false, false, XlCall.xlcA1R1c1);
+            int[] ac = ExManip.GetCellPos(cell_addr);
             int y = ac[0];
             int x = ac[1];
 
-            dynamic xlApp = ExcelDnaUtil.Application;
+            // fill values
             for (int i = 0; i < len; i++) {
                 var ex_ref = new ExcelReference(y + i, x - 1);
                 string s = ex_ref.GetValue().ToString();
+                string addr = xlApp.Cells(y + i + 1, x).Address;
                 if (s != "ExcelDna.Integration.ExcelEmpty") {
-                    string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x).Address;
+                    string errmsg = $@"Cannot overwrite non-empty cell(s): {addr}";
                     pye.LogMessage(errmsg, "WARNING");
                     return errmsg;
                 }
                 s = ret[i].ToString();
-                ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+                FillDataCell(ex_ref, s);
             }
             return "SUCCESS";
         }
 
         [ExcelFunction(Name = "QxlpyGetStrDict")]
-        public static string QxlpyGetStrDict(string obj_name)
+        public static string QxlpyGetStrDict(string obj_name, string func_pos = "")
         {
-            CheckType(obj_name);
+            CheckEmpty(obj_name);
+            CheckEmpty(func_pos);
             PyExecutor pye = new();
             Dictionary<string, List<string>> ret = pye.GetStrDict(obj_name);
             string[][] kv_pair = {
@@ -355,11 +597,12 @@ namespace qxlpy
             int len = kv_pair[0].Length;
             if (len == 0) { return "N/A"; }
 
-            int[] ac = ExManip.GetActiveCellPos();
+            dynamic xlApp = ExcelDnaUtil.Application;
+            string cell_addr = xlApp.Range(func_pos).Address(false, false, XlCall.xlcA1R1c1);
+            int[] ac = ExManip.GetCellPos(cell_addr);
             int y = ac[0];
             int x = ac[1];
 
-            dynamic xlApp = ExcelDnaUtil.Application;
             for (int i = 0; i < len; i++) {
                 for (int j = 0; j < 2; j++) {
                     var ex_ref = new ExcelReference(y + i, x - 2 + j);
@@ -370,16 +613,16 @@ namespace qxlpy
                         return errmsg;
                     }
                     s = kv_pair[j][i].ToString();
-                    ExcelAsyncUtil.QueueAsMacro(() => { ex_ref.SetValue(s); });
+                    FillDataCell(ex_ref, s);
                 }
             }
             return "SUCCESS";
         }
 
         [ExcelFunction(Name = "QxlpyObjectExists")]
-        public static bool QxlpyObjectExists(string obj_name)
+        public static bool QxlpyObjectExists(string obj_name, string func_pos = "")
         {
-            CheckType(obj_name);
+            CheckEmpty(obj_name);
             PyExecutor pye = new();
             bool ret = pye.ObjectExists(obj_name);
             return ret;
