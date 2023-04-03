@@ -286,6 +286,21 @@ namespace qxlpy
                 }
             }
 
+            // parse out ranges of inputs from formula
+            dynamic xlApp = ExcelDnaUtil.Application;
+            var rgx_f = new Regex(@"[$]?[A-Z]+[$]?[0-9]+:[$]?[A-Z]+[$]?[0-9]+");
+            MatchCollection pos_matches = rgx_f.Matches(old_formula);
+            // in a val_ranges item, the key is [1,1] and value is [2,2] (if the range is R1C1:R2C2)
+            var val_ranges = new Dictionary<int[], int[]>();
+            foreach (Match m in pos_matches) {
+                string ms = m.Value;
+                string cell_addr = xlApp.Range(ms).Address(false, false, XlCall.xlcA1R1c1);
+                string[] addrs = cell_addr.Split(':');
+                int[] ac_0 = ExManip.GetCellPos(addrs[0]);
+                int[] ac_1 = ExManip.GetCellPos(addrs[1]);
+                val_ranges.Add(ac_0, ac_1);
+            }
+
             // clear array and dict parameters
             int top_y = y - p_size - 2;
             int top_x = x - 1;
@@ -295,12 +310,25 @@ namespace qxlpy
                     // array
                     top_x += 1;
                     ExcelFunc.ClearCell(new ExcelReference(top_y, top_x));
+                    foreach (KeyValuePair<int[], int[]> item in val_ranges) {
+                        if (item.Key[0] - 1 == top_y + 1 && item.Value[1] - 1 == top_x) {
+                            ExcelFunc.ClearCell(new ExcelReference(
+                                item.Key[0] - 1, item.Value[0] - 1, item.Key[1] - 1, item.Value[1] - 1
+                            ));
+                        }
+                    }
                 } else if (t.Name.Contains("[,]")) {
                     // dict
-                    for (int i = 1; i < 3; i++) {
-                        top_x += i;
-                        ExcelFunc.ClearCell(new ExcelReference(top_y, top_x));
+                    top_x += 1;
+                    ExcelFunc.ClearCell(new ExcelReference(top_y, top_y, top_x, top_x + 1));
+                    foreach (KeyValuePair<int[], int[]> item in val_ranges) {
+                        if (item.Key[0] - 1 == top_y + 1 && item.Value[1]- 1 == top_x + 1) {
+                            ExcelFunc.ClearCell(new ExcelReference(
+                                item.Key[0] - 1, item.Value[0] - 1, item.Key[1] - 1, item.Value[1] - 1
+                            ));
+                        }
                     }
+                    top_x += 1;
                 }
             }
         }
@@ -464,7 +492,7 @@ namespace qxlpy
             AutoFill.AutoFuncClear();
         }
 
-        [ExcelCommand(Name = "funcclear", ShortCut = "^+D")]
+        [ExcelCommand(Name = "funcclear", ShortCut = "+{DELETE}")]
         public static void FuncClear()
         {
             AutoFill.AutoFuncClear();
