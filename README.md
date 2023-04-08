@@ -31,6 +31,11 @@ NuGet\Install-Package ExcelDna.AddIn -Version 1.6.0
 ## Python Linting and Testing
 * Open `Visual Studio 2022 Developer PowerShell` and go to the QuantExcelAddIn project directory.
 ```
+# Run pylint
+.\setup.ps1 -pylint $true
+
+# Run pytest
+.\setup.ps1 -pytest $true
 ```
 
 ## Reference
