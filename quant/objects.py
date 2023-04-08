@@ -8,7 +8,7 @@ from . import qxlpy_obj
 # pylint: disable=invalid-name
 
 
-def StoreStrDict(objdict: Dict[str, str]) -> str:
+def qxlpyStoreStrDict(objdict: Dict[str, str]) -> str:
     """
     store string dictionary and return the id
     """
@@ -16,7 +16,7 @@ def StoreStrDict(objdict: Dict[str, str]) -> str:
     # <key: str, value: str>
     return qxlpy_obj.store_obj(objdict)
 
-def GetStrDict(obj_name: str) -> Dict[str, str]:
+def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     """
     return the dictionary object
     """
@@ -24,13 +24,13 @@ def GetStrDict(obj_name: str) -> Dict[str, str]:
     return qxlpy_obj.get_obj(obj_name)
 
 # TODO - to be implemented by autogen
-def StoreStrList(objlist: List[str]) -> str:
+def qxlpyStoreStrList(objlist: List[str]) -> str:
     """
     store string list and return the id
     """
     return qxlpy_obj.store_obj(objlist)
 
-def ListGlobalObjects() -> List[str]:
+def qxlpyListGlobalObjects() -> List[str]:
     """
     return a list of cached object ids
     """
@@ -38,13 +38,13 @@ def ListGlobalObjects() -> List[str]:
     return qxlpy_obj.list_objs()
 
 # TODO - to be implemented by autogen
-def DeleteObject(obj_name: str) -> str:
+def qxlpyDeleteObject(obj_name: str) -> str:
     """
     delete a cached object by id
     """
     return qxlpy_obj.del_obj(obj_name)
 
-def ObjectExists(obj_name: str) -> bool:
+def qxlpyObjectExists(obj_name: str) -> bool:
     """
     check if an object exists by id
     """

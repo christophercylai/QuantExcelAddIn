@@ -9,7 +9,7 @@ from . import qxlpy_obj
 # pylint: disable=invalid-name
 
 
-def GetCalculate(dub_list: List[float]) -> str:
+def qxlpyGetCalculate(dub_list: List[float]) -> str:
     """
     return a string pointing to a calc object
     """
@@ -17,7 +17,7 @@ def GetCalculate(dub_list: List[float]) -> str:
     calobj = calc.Calc(dub_list)
     return qxlpy_obj.store_obj(calobj)
 
-def CalculateAddNum(addr: str) -> float:
+def qxlpyCalculateAddNum(addr: str) -> float:
     """
     call calc.add to sum up the numbers
     """

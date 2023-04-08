@@ -6,7 +6,7 @@ from .qxlpy_log import cs_logger
 # pylint: disable=invalid-name
 
 
-def LogMessage(logmsg: str, level: str = "INFO") -> str:
+def qxlpyLogMessage(logmsg: str, level: str = "INFO") -> str:
     """
     Log message and return a message to Excel
     """

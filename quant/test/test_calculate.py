@@ -8,5 +8,5 @@ def test_calculate():
     ret = 0
     for i in numlist:
         ret += i
-    cal = C.GetCalculate(numlist)
-    assert C.CalculateAddNum(cal) == ret
+    cal = C.qxlpyGetCalculate(numlist)
+    assert C.qxlpyCalculateAddNum(cal) == ret
