@@ -1,14 +1,16 @@
 # parameters
 param(
     [Parameter(
-        Mandatory=$True, Position=0, ValueFromPipeline=$False,
-        ParameterSetName='bitness'
+        Mandatory=$false, Position=0, ValueFromPipeline=$false,
+        ParameterSetName = 'bitness',
+        HelpMessage = 'Bitness of Excel 2016'
     )]
     [ValidateSet(32, 64)]
     [int]$bitness
 )
 
 $root = $pwd.Path
+$env:QXLPYDIR = $root
 
 # install Python 3.7.9 embeddable package
 if (!(Test-Path $root\python)) {

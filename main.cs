@@ -340,7 +340,7 @@ namespace qxlpy
             }
         }
     }
-    // END: public static clase AutoFill
+    // END: public static class AutoFill
 
 
     public static class ExManip

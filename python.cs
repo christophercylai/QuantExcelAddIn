@@ -9,16 +9,9 @@ namespace qxlpy
 
         public PyExecutor()
         {
-            DirectoryInfo di = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent;
-            // TODO: remove this once we automate Python setup
-            if (!di.Exists) {
-                throw new DirectoryNotFoundException(
-                    "Cannot find the parent directory to QuantExcelAddIn, where Python should reside."
-                );
-            }
-            string root = di.FullName;
+            string root = Environment.GetEnvironmentVariable("QXLPYDIR");
 
-            string python_dll = $@"{root}\..\python37\python37.dll";
+            string python_dll = $@"{root}\python\python311.dll";
             Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", python_dll);
 
             PythonEngine.Initialize();
