@@ -2,15 +2,29 @@
 param(
     [Parameter(
         Mandatory=$false, Position=0, ValueFromPipeline=$false,
-        ParameterSetName = 'bitness',
         HelpMessage = 'Bitness of Excel 2016'
     )]
     [ValidateSet(32, 64)]
-    [int]$bitness
+    [int]$bitness=64,
+    [Parameter(
+        Mandatory=$false, Position=1, ValueFromPipeline=$false,
+        HelpMessage = 'Run pylint on the quant Python package'
+    )]
+    [ValidateSet($true, $false)]
+    [bool]$pylint=$false,
+    [Parameter(
+        Mandatory=$false, Position=2, ValueFromPipeline=$false,
+        HelpMessage = 'Run pytest on the quant Python package'
+    )]
+    [ValidateSet($true, $false)]
+    [bool]$pytest=$false
 )
 
 $root = $pwd.Path
 $env:QXLPYDIR = $root
+
+
+if (!(Test-Path $root\Logs)) { mkdir $root\Logs }
 
 # install Python 3.7.9 embeddable package
 if (!(Test-Path $root\python)) {
@@ -32,4 +46,18 @@ if (!(Test-Path $root\python)) {
     # pip install the needed Python modules
     .\python.exe -m pip install -r $root\requirements.txt
     cd $root
+}
+
+# run pylint
+if ((Test-Path $root\python\python.exe)) {
+    if ($pylint) {
+        .\python\python.exe -m pylint quant
+    }
+}
+
+# run pytest
+if ((Test-Path $root\python\python.exe)) {
+    if ($pytest) {
+        .\python\python.exe -m pytest quant
+    }
 }
