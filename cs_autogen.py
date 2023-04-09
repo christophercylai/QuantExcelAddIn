@@ -39,12 +39,13 @@ type_map = {
 main_cs = ''
 python_cs = ''
 
-main_func = '        public static _RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
-python_import = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 for key, value in autogen_info.items():
     for funcs in value:
         # sub function name
-        main_f = re.sub('_FUNCTION_NAME_', funcs[0], main_func)
+        ret_pye = '            _RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
+        main_f = '        public static _RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
+        main_f = re.sub('_FUNCTION_NAME_', funcs[0], main_f)
+        ret_pye = re.sub('_FUNCTION_NAME_', funcs[0], ret_pye)
 
         # params and function contents
         argspec = inspect.getfullargspec(funcs[1])
@@ -57,18 +58,23 @@ for key, value in autogen_info.items():
             defaults.reverse()
             for num in range(len(defaults)):
                 arg_default[args[num]] = defaults[num]
+        args_str = ''
         for arg in args:
+            args_str += f'{arg}, '
             if not arg in arg_default:
                 arg_default[arg] = None
+        ret_pye = re.sub('_ARGS_', args_str[:-2], ret_pye)
 
         # return type
         annotations = argspec.annotations  # annotations is a dictionary
         if annotations['return'] in type_map:
             main_f = re.sub('_RETURN_TYPE_', type_map[annotations['return']], main_f)
+            ret_pye = re.sub('_RETURN_TYPE_', type_map[annotations['return']], ret_pye)
         else:
             # list and dict return string 'SUCCESS' to the func cell
             # results are printed below the function
             main_f = re.sub('_RETURN_TYPE_', 'string', main_f)
+            ret_pye = re.sub('_RETURN_TYPE_', 'string', ret_pye)
 
         # sub params
         params = ''
@@ -97,11 +103,13 @@ for key, value in autogen_info.items():
         main_cs += f'{main_f}\n'
         main_cs += '        {\n'
         main_cs += type_checks
-        main_cs += '            PyExecutor pye = new();'
+        main_cs += '            PyExecutor pye = new();\n'
+        main_cs += f'{ret_pye}\n'
         main_cs += '        }\n\n'
 
         # python_cs
-        python_ipt = re.sub('_MODULE_NAME_', key, python_import)
+        python_ipt = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
+        python_ipt = re.sub('_MODULE_NAME_', key, python_ipt)
 
 print(main_cs)
 
