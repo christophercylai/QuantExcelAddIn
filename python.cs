@@ -24,18 +24,7 @@ namespace qxlpy
             }
         }
 
-        public string qxlpyGetPath()
-        {
-            using (Py.GIL())
-            {
-                dynamic os = SCOPE.Import("os");
-                string path_env = os.getenv("PATH");
-                return path_env;
-            }
-        }
-
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
-
         public string qxlpyLogMessage(string logmsg, string level)
         {
             using (Py.GIL())

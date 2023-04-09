@@ -4,7 +4,7 @@ Perform simple calculations
 from typing import List
 
 from .Calculate import calc
-from . import qxlpy_obj
+from . import global_obj
 
 # pylint: disable=invalid-name
 
@@ -15,7 +15,7 @@ def qxlpyGetCalculate(dub_list: List[float]) -> str:
     """
     # returns the address of the Calculate py obj
     calobj = calc.Calc(dub_list)
-    return qxlpy_obj.store_obj(calobj)
+    return global_obj.store_obj(calobj)
 
 def qxlpyCalculateAddNum(addr: str) -> float:
     """
@@ -23,5 +23,5 @@ def qxlpyCalculateAddNum(addr: str) -> float:
     """
     # this func takes the address returned from Calculate
     # and make add computation
-    calobj = qxlpy_obj.get_obj(addr)
+    calobj = global_obj.get_obj(addr)
     return calobj.add()

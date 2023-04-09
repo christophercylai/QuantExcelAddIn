@@ -1,7 +1,7 @@
 """
 Logger for CSharp
 """
-from .qxlpy_log import cs_logger
+from .global_log import cs_logger
 
 # pylint: disable=invalid-name
 

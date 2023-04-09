@@ -505,16 +505,7 @@ namespace qxlpy
             AutoFill.AutoFuncClear();
         }
 
-        [ExcelFunction(Name = "qxlpyGetPath")]
-        public static string qxlpyGetPath(string func_pos = "")
-        {
-            PyExecutor pye = new();
-            string path = pye.qxlpyGetPath();
-            return path;
-        }
-
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
-
         [ExcelFunction(Name = "qxlpyLogMessage")]
         public static string qxlpyLogMessage(string logmsg, string level = "INFO", string func_pos = "")
         {
