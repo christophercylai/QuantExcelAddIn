@@ -65,20 +65,34 @@ for key, value in autogen_info.items():
 
         annotations = argspec.annotations  # annotations is a dictionary
         params = ''
+        type_checks = ''
         for ky, vlu in arg_default.items():
             p_type = annotations[ky]
             if p_type in type_map:
                 params += f'{type_map[p_type]} '
-            elif 'Dict' in str(p_type):
-                params += f'{type_map[dict]} '
+                type_checks += f'            CheckEmpty({ky})\n'
             elif 'List' in str(p_type):
                 params += f'{type_map[list]} '
+                type_checks += f'            ListCheckEmpty({ky})\n'
+            elif 'Dict' in str(p_type):
+                params += f'{type_map[dict]} '
+                type_checks += f'            DictCheckEmpty({ky})\n'
             else:
                 raise KeyError(f'{key}.{func[0]}: {type_map[p_type]} is not a valid C# type')
-            params += f'{ky}, '
-        params = params[:-2]
+            params += ky
+            if ky in arg_default:
+                params += f' = "{arg_default[ky]}"'
+            params += ', '
+        params += 'string func_pos = ""'
         main_f = re.sub('_PARAMETERS_', params, main_f)
-        print(main_f)
+        main_cs += f'{main_f}\n'
+        main_cs += '        {\n'
+        main_cs += type_checks
+
+        # add type check
+        main_cs += '        }\n\n'
+
+print(main_cs)
 
 
 
