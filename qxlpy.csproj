@@ -20,11 +20,12 @@
 
   <ItemGroup>
     <PackageReference Include="Excel-DNA" Version="1.6.0" />
+    <PackageReference Include="ExcelDna.AddIn" Version="1.6.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Python.Runtime">
-      <HintPath>..\.venv\Lib\site-packages\pythonnet\runtime\Python.Runtime.dll</HintPath>
+      <HintPath>python\Lib\site-packages\pythonnet\runtime\Python.Runtime.dll</HintPath>
     </Reference>
   </ItemGroup>
 

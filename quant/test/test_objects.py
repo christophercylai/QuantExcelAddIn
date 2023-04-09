@@ -8,18 +8,18 @@ def test_objects():
         "A": "Apple",
         "B": "Bee"
     }
-    dic = O.StoreStrDict(strdict)
+    dic = O.qxlpyStoreStrDict(strdict)
 
     strlist = ["a", "b"]
-    lst = O.StoreStrList(strlist)
+    lst = O.qxlpyStoreStrList(strlist)
 
-    assert dic in O.ListGlobalObjects()
-    assert lst in O.ListGlobalObjects()
+    assert dic in O.qxlpyListGlobalObjects()
+    assert lst in O.qxlpyListGlobalObjects()
 
-    ret = O.GetStrDict(dic)
+    ret = O.qxlpyGetStrDict(dic)
     assert ret["A"] == strdict["A"]
     assert ret["B"] == strdict["B"]
 
-    O.DeleteObject(dic)
-    assert O.ObjectExists(lst) is True
-    assert O.ObjectExists(dic) is False
+    O.qxlpyDeleteObject(dic)
+    assert O.qxlpyObjectExists(lst) is True
+    assert O.qxlpyObjectExists(dic) is False

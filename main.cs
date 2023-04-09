@@ -340,7 +340,7 @@ namespace qxlpy
             }
         }
     }
-    // END: public static clase AutoFill
+    // END: public static class AutoFill
 
 
     public static class ExManip
@@ -505,59 +505,59 @@ namespace qxlpy
             AutoFill.AutoFuncClear();
         }
 
-        [ExcelFunction(Name = "QxlpyGetPath")]
-        public static string QxlpyGetPath(string func_pos = "")
+        [ExcelFunction(Name = "qxlpyGetPath")]
+        public static string qxlpyGetPath(string func_pos = "")
         {
             PyExecutor pye = new();
-            string path = pye.GetPath();
+            string path = pye.qxlpyGetPath();
             return path;
         }
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
-        [ExcelFunction(Name = "QxlpyLogMessage")]
-        public static string QxlpyLogMessage(string logmsg, string level = "INFO", string func_pos = "")
+        [ExcelFunction(Name = "qxlpyLogMessage")]
+        public static string qxlpyLogMessage(string logmsg, string level = "INFO", string func_pos = "")
         {
             CheckEmpty(logmsg);
             CheckEmpty(level);
             PyExecutor pye = new();
-            string ret = pye.LogMessage(logmsg, level);
+            string ret = pye.qxlpyLogMessage(logmsg, level);
             return ret;
         }
 
-        [ExcelFunction(Name = "QxlpyGetCalculate")]
-        public static string QxlpyGetCalculate(object[] objlist, string func_pos = "")
+        [ExcelFunction(Name = "qxlpyGetCalculate")]
+        public static string qxlpyGetCalculate(object[] objlist, string func_pos = "")
         {
             ListCheckEmpty(objlist);
             PyExecutor pye = new();
-            string ret = pye.GetCalculate(objlist);
+            string ret = pye.qxlpyGetCalculate(objlist);
             return ret;
         }
 
-        [ExcelFunction(Name = "QxlpyCalculateAddNum")]
-        public static double QxlpyCalculateAddNum(string addr, string func_pos = "")
+        [ExcelFunction(Name = "qxlpyCalculateAddNum")]
+        public static double qxlpyCalculateAddNum(string addr, string func_pos = "")
         {
             CheckEmpty(addr);
             PyExecutor pye = new();
-            double ret = pye.CalculateAddNum(addr);
+            double ret = pye.qxlpyCalculateAddNum(addr);
             return ret;
         }
 
-        [ExcelFunction(Name = "QxlpyStoreStrDict")]
-        public static string QxlpyStoreStrDict(object[,] objdict, string func_pos = "")
+        [ExcelFunction(Name = "qxlpyStoreStrDict")]
+        public static string qxlpyStoreStrDict(object[,] objdict, string func_pos = "")
         {
             DictCheckEmpty(objdict);
             PyExecutor pye = new();
-            string ret = pye.StoreStrDict(objdict);
+            string ret = pye.qxlpyStoreStrDict(objdict);
             return ret;
         }
 
-        [ExcelFunction(Name = "QxlpyListGlobalObjects")]
-        public static string QxlpyListGlobalObjects(string func_pos = "")
+        [ExcelFunction(Name = "qxlpyListGlobalObjects")]
+        public static string qxlpyListGlobalObjects(string func_pos = "")
         {
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            object[] ret = pye.ListGlobalObjects().ToArray();
+            object[] ret = pye.qxlpyListGlobalObjects().ToArray();
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
 
@@ -583,13 +583,13 @@ namespace qxlpy
             return "SUCCESS";
         }
 
-        [ExcelFunction(Name = "QxlpyGetStrDict")]
-        public static string QxlpyGetStrDict(string obj_name, string func_pos = "")
+        [ExcelFunction(Name = "qxlpyGetStrDict")]
+        public static string qxlpyGetStrDict(string obj_name, string func_pos = "")
         {
             CheckEmpty(obj_name);
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            Dictionary<string, List<string>> ret = pye.GetStrDict(obj_name);
+            Dictionary<string, List<string>> ret = pye.qxlpyGetStrDict(obj_name);
             string[][] kv_pair = {
                 ret["keys"].ToArray(),
                 ret["values"].ToArray()
@@ -619,12 +619,12 @@ namespace qxlpy
             return "SUCCESS";
         }
 
-        [ExcelFunction(Name = "QxlpyObjectExists")]
-        public static bool QxlpyObjectExists(string obj_name, string func_pos = "")
+        [ExcelFunction(Name = "qxlpyObjectExists")]
+        public static bool qxlpyObjectExists(string obj_name, string func_pos = "")
         {
             CheckEmpty(obj_name);
             PyExecutor pye = new();
-            bool ret = pye.ObjectExists(obj_name);
+            bool ret = pye.qxlpyObjectExists(obj_name);
             return ret;
         }
     }

@@ -9,16 +9,9 @@ namespace qxlpy
 
         public PyExecutor()
         {
-            DirectoryInfo di = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent;
-            // TODO: remove this once we automate Python setup
-            if (!di.Exists) {
-                throw new DirectoryNotFoundException(
-                    "Cannot find the parent directory to QuantExcelAddIn, where Python should reside."
-                );
-            }
-            string root = di.FullName;
+            string root = Environment.GetEnvironmentVariable("QXLPYDIR");
 
-            string python_dll = $@"{root}\..\python37\python37.dll";
+            string python_dll = $@"{root}\python\python311.dll";
             Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", python_dll);
 
             PythonEngine.Initialize();
@@ -31,7 +24,7 @@ namespace qxlpy
             }
         }
 
-        public string GetPath()
+        public string qxlpyGetPath()
         {
             using (Py.GIL())
             {
@@ -43,17 +36,17 @@ namespace qxlpy
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
 
-        public string LogMessage(string logmsg, string level)
+        public string qxlpyLogMessage(string logmsg, string level)
         {
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.cslog");
-                string ret = imp.LogMessage(logmsg, level);
+                string ret = imp.qxlpyLogMessage(logmsg, level);
                 return ret;
             }
         }
 
-        public string GetCalculate(object[] dub_list)
+        public string qxlpyGetCalculate(object[] dub_list)
         {
             // returns the address of the Calculate py obj
             using (Py.GIL())
@@ -67,24 +60,24 @@ namespace qxlpy
                     pylist.Append(new PyFloat(dub));
                 }
                 dynamic imp = SCOPE.Import("quant.calculate");
-                string ret = imp.GetCalculate(pylist);
+                string ret = imp.qxlpyGetCalculate(pylist);
                 return ret;
             }
         }
 
-        public double CalculateAddNum(string addr)
+        public double qxlpyCalculateAddNum(string addr)
         {
             // this func takes the address returned from Calculate
             // and make add computation
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.calculate");
-                double ret = imp.CalculateAddNum(addr);
+                double ret = imp.qxlpyCalculateAddNum(addr);
                 return ret;
             }
         }
 
-        public string StoreStrDict(object[,] objdict)
+        public string qxlpyStoreStrDict(object[,] objdict)
         {
             // returns the address of the Calculate py obj
             // <key: str, value: str>
@@ -103,18 +96,18 @@ namespace qxlpy
                     pydict[k] = new PyString(v);
                 }
                 dynamic imp = SCOPE.Import("quant.objects");
-                string ret = imp.StoreStrDict(pydict);
+                string ret = imp.qxlpyStoreStrDict(pydict);
                 return ret;
             }
         }
 
-        public List<string> ListGlobalObjects()
+        public List<string> qxlpyListGlobalObjects()
         {
             // returns a list of stored objects
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                PyList pylist = imp.ListGlobalObjects();
+                PyList pylist = imp.qxlpyListGlobalObjects();
                 var ret = new List<string>();
                 foreach (PyObject pyobj in pylist) {
                     ret.Add(pyobj.ToString());
@@ -123,13 +116,13 @@ namespace qxlpy
             }
         }
 
-        public Dictionary<string, List<string>> GetStrDict(string obj_name)
+        public Dictionary<string, List<string>> qxlpyGetStrDict(string obj_name)
         {
             // returns a dictionary object
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                PyDict pydict = imp.GetStrDict(obj_name);
+                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
                 var keys = new List<string>();
                 var values = new List<string>();
                 foreach (PyObject key in pydict) {
@@ -143,13 +136,13 @@ namespace qxlpy
             }
         }
 
-        public bool ObjectExists (string obj_name)
+        public bool qxlpyObjectExists (string obj_name)
         {
             // check the existence of an obj
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                bool ret = imp.ObjectExists(obj_name);
+                bool ret = imp.qxlpyObjectExists(obj_name);
                 return ret;
             }
         }
