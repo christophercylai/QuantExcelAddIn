@@ -39,16 +39,14 @@ type_map = {
 main_cs = ''
 python_cs = ''
 
-main_func = '        public static string _FUNCTION_NAME_(_PARAMETERS_)'
+main_func = '        public static _RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 python_import = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 for key, value in autogen_info.items():
-    # sub params
-    python_ipt = re.sub('_MODULE_NAME_', key, python_import)
-    print(python_ipt)
     for funcs in value:
         # sub function name
         main_f = re.sub('_FUNCTION_NAME_', funcs[0], main_func)
-        # sub params
+
+        # params and function contents
         argspec = inspect.getfullargspec(funcs[1])
         defaults = argspec.defaults
         arg_default = {}
@@ -63,10 +61,20 @@ for key, value in autogen_info.items():
             if not arg in arg_default:
                 arg_default[arg] = None
 
+        # return type
         annotations = argspec.annotations  # annotations is a dictionary
+        if annotations['return'] in type_map:
+            main_f = re.sub('_RETURN_TYPE_', type_map[annotations['return']], main_f)
+        else:
+            # list and dict return string 'SUCCESS' to the func cell
+            # results are printed below the function
+            main_f = re.sub('_RETURN_TYPE_', 'string', main_f)
+
+        # sub params
         params = ''
         type_checks = ''
         for ky, vlu in arg_default.items():
+            # params
             p_type = annotations[ky]
             if p_type in type_map:
                 params += f'{type_map[p_type]} '
@@ -80,17 +88,20 @@ for key, value in autogen_info.items():
             else:
                 raise KeyError(f'{key}.{func[0]}: {type_map[p_type]} is not a valid C# type')
             params += ky
-            if ky in arg_default:
+            if arg_default[ky]:
                 params += f' = "{arg_default[ky]}"'
             params += ', '
+
         params += 'string func_pos = ""'
         main_f = re.sub('_PARAMETERS_', params, main_f)
         main_cs += f'{main_f}\n'
         main_cs += '        {\n'
         main_cs += type_checks
-
-        # add type check
+        main_cs += '            PyExecutor pye = new();'
         main_cs += '        }\n\n'
+
+        # python_cs
+        python_ipt = re.sub('_MODULE_NAME_', key, python_import)
 
 print(main_cs)
 
