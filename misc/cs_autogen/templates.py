@@ -597,12 +597,24 @@ _DL_RETURN_
 PYTHON_FUNC = '        public _FUNC_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 PYTHON_IPT = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 PYTHON_CALL = '                _FUNC_TYPE_ ret = imp._FUNCTION_NAME_(_ARGS_);'
-PYTHON_RETURN = r'''
+PYTHON_LIST_RETURN = r'''
                 var ret_list = new List<string>();
                 PyList pylist = imp.qxlpyListGlobalObjects();
                 foreach (PyObject pyobj in pylist) {
-                    ret_list.Add(pyobj._RET_TYPE_());
+                    ret_list.Add(pyobj._TO_TYPE_());
                 }
                 object[] ret = ret_list.ToArray();
+'''
+PYTHON_DICT_RETURN = r'''
+                var ret = new List<List<object>>();
+                var keys = new List<object>();
+                var values = new List<object>();
+                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
+                foreach (PyObject key in pydict) {
+                    keys.Add(Convert._TO_KEY_TYPE_(key));
+                    values.Add(Convert._TO_VAL_TYPE_(pydict.GetItem(key)));
+                }
+                ret.Add(keys);
+                ret.Add(values);
 '''
 ### python.cs string templates ENDS ###

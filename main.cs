@@ -584,10 +584,10 @@ namespace qxlpy
             CheckEmpty(obj_name);
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            Dictionary<string, List<object>> ret = pye.qxlpyGetStrDict(obj_name);
+            List<List<object>> ret = pye.qxlpyGetStrDict(obj_name);
             object[][] kv_pair = {
-                ret["keys"].ToArray(),
-                ret["values"].ToArray()
+                ret[0].ToArray(),
+                ret[1].ToArray()
             };
             int len = kv_pair[0].Length;
             if (len == 0) { return "N/A"; }

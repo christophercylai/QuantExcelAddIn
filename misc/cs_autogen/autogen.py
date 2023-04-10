@@ -39,7 +39,10 @@ def autogen(gen_main = True, gen_python = True):
         dict: 'object[,]'
     }
 
+    # Reference:
+    # https://learn.microsoft.com/en-us/dotnet/api/system.convert?redirectedfrom=MSDN&view=net-6.0
     to_type_map = {
+        bool: 'ToBool',
         str: 'ToString',
         int: 'ToInt64',
         float: 'ToDouble'
@@ -115,18 +118,21 @@ def autogen(gen_main = True, gen_python = True):
                 main_ld = templates.MAIN_LIST
 
                 list_type = type_map[ret_type.__args__[0]]
-                python_dl_return = re.sub('_RET_TYPE_', to_type_map[ret_type.__args__[0]], templates.PYTHON_RETURN)
+                python_dl_return = re.sub('_TO_TYPE_', to_type_map[ret_type.__args__[0]], templates.PYTHON_LIST_RETURN)
                 python_call  = ''
                 python_func  = re.sub('_FUNC_TYPE_', 'object[]', python_func)
             elif 'Dict' == ret_type._name:
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
                 type_checks += f'            CheckEmpty(func_pos);\n'
                 main_return_s = re.sub('_RET_', '"SUCCESS"', main_return_s)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', 'Dictionary<string, List<object>>', main_ret_pye)
+                main_ret_pye = re.sub('_PY_RETURN_TYPE_', 'List<List<object>>', main_ret_pye)
                 main_ld = templates.MAIN_DICT
 
-                python_func  = re.sub('_FUNC_TYPE_', 'Dictionary<string, List<object>>', python_func)
-                python_call  = re.sub('_FUNC_TYPE_', type_map[dict], python_call)
+                python_func  = re.sub('_FUNC_TYPE_', 'List<List<object>>', python_func)
+                python_dl_return = templates.PYTHON_DICT_RETURN
+                python_dl_return = re.sub('_TO_KEY_TYPE_', to_type_map[ret_type.__args__[0]], python_dl_return)
+                python_dl_return = re.sub('_TO_VAL_TYPE_', to_type_map[ret_type.__args__[1]], python_dl_return)
+                python_call  = ''
             else:
                 raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
 
