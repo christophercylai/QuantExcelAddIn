@@ -41,8 +41,8 @@ def autogen(gen_main = True, gen_python = True):
 
     to_type_map = {
         str: 'ToString',
-        int: 'long',
-        float: 'double'
+        int: 'ToInt64',
+        float: 'ToDouble'
     }
 
     # autogen scripts variables
@@ -64,6 +64,8 @@ def autogen(gen_main = True, gen_python = True):
 
             python_func = templates.PYTHON_FUNC
             python_call = templates.PYTHON_CALL
+            python_dl_inputs = ''
+            python_dl_return = ''
 
             # function name
             main_f = re.sub('_FUNCTION_NAME_', funcs[0], main_f)
@@ -106,9 +108,11 @@ def autogen(gen_main = True, gen_python = True):
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
                 type_checks += f'            CheckEmpty(func_pos);\n'
                 main_return_s = re.sub('_RET_', '"SUCCESS"', main_return_s)
-###list_type = type_map[ret_type.__args__[0]]
                 main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[list], main_ret_pye)
                 main_ld = templates.MAIN_LIST
+
+                list_type = type_map[ret_type.__args__[0]]
+                python_dl_return = re.sub('_TYPE_', list_type, templates.PYTHON_RETURN)
             elif 'Dict' == ret_type._name:
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
                 type_checks += f'            CheckEmpty(func_pos);\n'
@@ -164,11 +168,15 @@ def autogen(gen_main = True, gen_python = True):
                 f'{python_ipt}\n',
                 f'{python_call}',
             ]
-            python_gil = ''
+            python_f_body = ''
             for ea_line in python_array:
-                python_gil += ea_line
+                python_f_body += ea_line
+            python_gil = templates.PYTHON_GIL
+            python_gil = re.sub('_DL_INPUTS_', python_dl_inputs, python_gil)
+            python_gil = re.sub('_BODY_', python_f_body, python_gil)
+            python_gil = re.sub('_DL_RETURN_', python_dl_return, python_gil)
             python_cs += f'{python_func}'
-            python_cs += re.sub('_BODY_', python_gil, templates.PYTHON_GIL)
+            python_cs += f'{python_gil}'
 
     if gen_main:
         main_body = re.sub('_BODY_', main_cs, templates.MAIN_BODY)

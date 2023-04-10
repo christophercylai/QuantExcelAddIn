@@ -587,8 +587,9 @@ MAIN_DICT = r'''
 PYTHON_GIL = """
         {
             using (Py.GIL())
-            {
+            {_DL_INPUTS_
 _BODY_
+_DL_RETURN_
                 return ret;
             }
         }
@@ -596,4 +597,15 @@ _BODY_
 PYTHON_FUNC = '        public string _FUNCTION_NAME_(_PARAMETERS_)'
 PYTHON_IPT = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 PYTHON_CALL = '                string ret = imp._FUNCTION_NAME_(_ARGS_);'
+PYTHON_RETURN = r'''
+                var keys = new List<object>();
+                var values = new List<object>();
+                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
+                foreach (PyObject key in pydict) {
+                    keys.Add(Convert._TYPE_(key));
+                    values.Add(Convert._TYPE_(pydict.GetItem(key)));
+                }
+                ret["keys"] = keys;
+                ret["values"] = values;
+'''
 ### python.cs string templates ENDS ###

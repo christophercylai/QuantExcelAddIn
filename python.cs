@@ -48,6 +48,7 @@ namespace qxlpy
                     if (!parse_ok) { throw new ArrayTypeMismatchException("Wrong type in array"); }
                     pylist.Append(new PyFloat(dub));
                 }
+
                 dynamic imp = SCOPE.Import("quant.calculate");
                 string ret = imp.qxlpyGetCalculate(pylist);
                 return ret;
@@ -84,6 +85,7 @@ namespace qxlpy
                     if (!parse_ok) { throw new ArrayTypeMismatchException("There is an empty string"); }
                     pydict[k] = new PyString(v);
                 }
+
                 dynamic imp = SCOPE.Import("quant.objects");
                 string ret = imp.qxlpyStoreStrDict(pydict);
                 return ret;
@@ -96,8 +98,9 @@ namespace qxlpy
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                PyList pylist = imp.qxlpyListGlobalObjects();
                 var ret_list = new List<string>();
+
+                PyList pylist = imp.qxlpyListGlobalObjects();
                 foreach (PyObject pyobj in pylist) {
                     ret_list.Add(pyobj.ToString());
                 }
@@ -112,14 +115,15 @@ namespace qxlpy
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
+                var ret = new Dictionary<string, List<object>>();
+
                 var keys = new List<object>();
                 var values = new List<object>();
+                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
                 foreach (PyObject key in pydict) {
-                    keys.Add(key.ToString());
-                    values.Add(pydict.GetItem(key).ToString());
+                    keys.Add(Convert.ToString(key));
+                    values.Add(Convert.ToString(pydict.GetItem(key)));
                 }
-                var ret = new Dictionary<string, List<object>>();
                 ret["keys"] = keys;
                 ret["values"] = values;
                 return ret;
