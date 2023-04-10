@@ -472,7 +472,7 @@ namespace qxlpy
                 XlCall.Excel(XlCall.xlcFormatFont, "Courier New", 9, false, true);
                 XlCall.Excel(XlCall.xlcPatterns, 1, 35, 1);
                 XlCall.Excel(XlCall.xlcBorder, 1);
-                ex_ref.SetValue(1);
+                ex_ref.SetValue(obj);
             });
         }
 
@@ -585,7 +585,7 @@ namespace qxlpy
             CheckEmpty(func_pos);
             PyExecutor pye = new();
             Dictionary<string, List<object>> ret = pye.qxlpyGetStrDict(obj_name);
-            string[][] kv_pair = {
+            object[][] kv_pair = {
                 ret["keys"].ToArray(),
                 ret["values"].ToArray()
             };
