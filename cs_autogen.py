@@ -41,9 +41,11 @@ python_cs = ''
 
 for key, value in autogen_info.items():
     for funcs in value:
+        ret_pye = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
+        main_f = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
+        return_s = '            return _RET_;'
+
         # sub function name
-        ret_pye = '            _RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
-        main_f = '        public static _RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
         main_f = re.sub('_FUNCTION_NAME_', funcs[0], main_f)
         ret_pye = re.sub('_FUNCTION_NAME_', funcs[0], ret_pye)
 
@@ -66,19 +68,27 @@ for key, value in autogen_info.items():
         ret_pye = re.sub('_ARGS_', args_str[:-2], ret_pye)
 
         # return type
+        type_checks = ''
         annotations = argspec.annotations  # annotations is a dictionary
         if annotations['return'] in type_map:
-            main_f = re.sub('_RETURN_TYPE_', type_map[annotations['return']], main_f)
-            ret_pye = re.sub('_RETURN_TYPE_', type_map[annotations['return']], ret_pye)
-        else:
+            main_f = re.sub('_EXCEL_RETURN_TYPE_', type_map[annotations['return']], main_f)
+            ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[annotations['return']], ret_pye)
+            return_s = re.sub('_RET_', 'ret', return_s)
+        elif 'List' in str(annotations['return']):
             # list and dict return string 'SUCCESS' to the func cell
             # results are printed below the function
-            main_f = re.sub('_RETURN_TYPE_', 'string', main_f)
-            ret_pye = re.sub('_RETURN_TYPE_', 'string', ret_pye)
+            main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
+            ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[list], ret_pye)
+            type_checks += f'            CheckEmpty(func_pos)\n'
+            return_s = re.sub('_RET_', '"SUCCESS"', return_s)
+        elif 'Dict' in str(annotations['return']):
+            main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
+            ret_pye = re.sub('_PY_RETURN_TYPE_', 'Dictionary<string, List<string>>', ret_pye)
+            type_checks += f'            CheckEmpty(func_pos)\n'
+            return_s = re.sub('_RET_', '"SUCCESS"', return_s)
 
         # sub params
         params = ''
-        type_checks = ''
         for ky, vlu in arg_default.items():
             # params
             p_type = annotations[ky]
@@ -100,33 +110,23 @@ for key, value in autogen_info.items():
 
         params += 'string func_pos = ""'
         main_f = re.sub('_PARAMETERS_', params, main_f)
-        main_cs += f'{main_f}\n'
-        main_cs += '        {\n'
-        main_cs += type_checks
-        main_cs += '            PyExecutor pye = new();\n'
-        main_cs += f'{ret_pye}\n'
-        main_cs += '        }\n\n'
+        main_array = [
+            f'{main_f}\n',
+            '        {\n',
+            type_checks,
+            '            PyExecutor pye = new();\n',
+            f'{ret_pye}\n',
+            f'{return_s}\n',
+            '        }\n\n'
+        ]
+        for ea_line in main_array:
+            main_cs += ea_line
 
         # python_cs
         python_ipt = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
         python_ipt = re.sub('_MODULE_NAME_', key, python_ipt)
 
 print(main_cs)
-
-
-
-
-main_cs = """
-        {
-            CheckEmpty(logmsg);
-            CheckEmpty(level);
-            PyExecutor pye = new();
-            string ret = pye._FUNCTION_NAME_(logmsg, level);
-            return ret;
-        }
-"""
-
-main_excelfunc = '        [ExcelFunction(Name = "_FUNCTION_NAME_")]'
 
 
 
