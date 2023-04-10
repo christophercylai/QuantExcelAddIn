@@ -98,13 +98,14 @@ namespace qxlpy
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
-                var ret_list = new List<string>();
 
+                var ret_list = new List<string>();
                 PyList pylist = imp.qxlpyListGlobalObjects();
                 foreach (PyObject pyobj in pylist) {
                     ret_list.Add(pyobj.ToString());
                 }
                 object[] ret = ret_list.ToArray();
+
                 return ret;
             }
         }
