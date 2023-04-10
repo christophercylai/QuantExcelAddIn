@@ -382,7 +382,7 @@ namespace qxlpy
         {
             // use python logging
             PyExecutor pye = new();
-            pye.LogMessage(logmsg, level);
+            pye.qxlpyLogMessage(logmsg, level);
         }
 
         public static int[] GetCellPos(string cell_addr)
@@ -464,7 +464,7 @@ namespace qxlpy
             }
         }
 
-        private static void FillDataCell(ExcelReference ex_ref, string s)
+        private static void FillDataCell(ExcelReference ex_ref, object obj)
         {
             ExcelAsyncUtil.QueueAsMacro(() => {
                 // select ex_ref as active
@@ -472,7 +472,7 @@ namespace qxlpy
                 XlCall.Excel(XlCall.xlcFormatFont, "Courier New", 9, false, true);
                 XlCall.Excel(XlCall.xlcPatterns, 1, 35, 1);
                 XlCall.Excel(XlCall.xlcBorder, 1);
-                ex_ref.SetValue(s);
+                ex_ref.SetValue(1);
             });
         }
 
@@ -548,7 +548,7 @@ namespace qxlpy
         {
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            object[] ret = pye.qxlpyListGlobalObjects().ToArray();
+            string[] ret = pye.qxlpyListGlobalObjects().ToArray();
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
 
@@ -558,18 +558,22 @@ namespace qxlpy
             int y = ac[0];
             int x = ac[1];
 
+            // check empty cells
+            for (int i = 0; i < len; i++) {
+                var x_ref = new ExcelReference(y + i, x - 1);
+                string cell_location = x_ref.GetValue().ToString();
+                if (cell_location != "ExcelDna.Integration.ExcelEmpty") {
+                    string addr = xlApp.Cells(y + i + 1, x).Address;
+                    string errmsg = $@"Cannot overwrite non-empty cell(cell_location): {addr}";
+                    pye.qxlpyLogMessage(errmsg, "WARNING");
+                    return errmsg;
+                }
+            }
+
             // fill values
             for (int i = 0; i < len; i++) {
                 var ex_ref = new ExcelReference(y + i, x - 1);
-                string s = ex_ref.GetValue().ToString();
-                string addr = xlApp.Cells(y + i + 1, x).Address;
-                if (s != "ExcelDna.Integration.ExcelEmpty") {
-                    string errmsg = $@"Cannot overwrite non-empty cell(s): {addr}";
-                    pye.LogMessage(errmsg, "WARNING");
-                    return errmsg;
-                }
-                s = ret[i].ToString();
-                FillDataCell(ex_ref, s);
+                FillDataCell(ex_ref, ret[i]);
             }
             return "SUCCESS";
         }
@@ -594,17 +598,24 @@ namespace qxlpy
             int y = ac[0];
             int x = ac[1];
 
+            // check empty cells
+            for (int i = 0; i < len; i++) {
+                for (int j = 0; j < 2; j++) {
+                    var x_ref = new ExcelReference(y + i, x - 2 + j);
+                    string cell_location = x_ref.GetValue().ToString();
+                    if (cell_location != "ExcelDna.Integration.ExcelEmpty") {
+                        string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x - 1 + j).Address;
+                        pye.qxlpyLogMessage(errmsg, "WARNING");
+                        return errmsg;
+                    }
+                }
+            }
+
+            // fill values
             for (int i = 0; i < len; i++) {
                 for (int j = 0; j < 2; j++) {
                     var ex_ref = new ExcelReference(y + i, x - 2 + j);
-                    string s = ex_ref.GetValue().ToString();
-                    if (s != "ExcelDna.Integration.ExcelEmpty") {
-                        string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x - 1 + j).Address;
-                        pye.LogMessage(errmsg, "WARNING");
-                        return errmsg;
-                    }
-                    s = kv_pair[j][i].ToString();
-                    FillDataCell(ex_ref, s);
+                    FillDataCell(ex_ref, kv_pair[j][i].ToString());
                 }
             }
             return "SUCCESS";

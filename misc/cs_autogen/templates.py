@@ -1,0 +1,5 @@
+MAIN_F = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
+RET_PYE = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
+RETURN_S = '            return _RET_;'
+MAIN_LIST = r'''
+'''
