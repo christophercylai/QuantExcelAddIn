@@ -90,35 +90,36 @@ namespace qxlpy
             }
         }
 
-        public List<string> qxlpyListGlobalObjects()
+        public object[] qxlpyListGlobalObjects()
         {
             // returns a list of stored objects
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
                 PyList pylist = imp.qxlpyListGlobalObjects();
-                var ret = new List<string>();
+                var ret_list = new List<string>();
                 foreach (PyObject pyobj in pylist) {
-                    ret.Add(pyobj.ToString());
+                    ret_list.Add(pyobj.ToString());
                 }
+                object[] ret = ret_list.ToArray();
                 return ret;
             }
         }
 
-        public Dictionary<string, List<string>> qxlpyGetStrDict(string obj_name)
+        public Dictionary<string, List<object>> qxlpyGetStrDict(string obj_name)
         {
             // returns a dictionary object
             using (Py.GIL())
             {
                 dynamic imp = SCOPE.Import("quant.objects");
                 PyDict pydict = imp.qxlpyGetStrDict(obj_name);
-                var keys = new List<string>();
-                var values = new List<string>();
+                var keys = new List<object>();
+                var values = new List<object>();
                 foreach (PyObject key in pydict) {
                     keys.Add(key.ToString());
                     values.Add(pydict.GetItem(key).ToString());
                 }
-                var ret = new Dictionary<string, List<string>>();
+                var ret = new Dictionary<string, List<object>>();
                 ret["keys"] = keys;
                 ret["values"] = values;
                 return ret;

@@ -548,7 +548,7 @@ namespace qxlpy
         {
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            string[] ret = pye.qxlpyListGlobalObjects().ToArray();
+            object[] ret = pye.qxlpyListGlobalObjects().ToArray();
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
 
@@ -584,7 +584,7 @@ namespace qxlpy
             CheckEmpty(obj_name);
             CheckEmpty(func_pos);
             PyExecutor pye = new();
-            Dictionary<string, List<string>> ret = pye.qxlpyGetStrDict(obj_name);
+            Dictionary<string, List<object>> ret = pye.qxlpyGetStrDict(obj_name);
             string[][] kv_pair = {
                 ret["keys"].ToArray(),
                 ret["values"].ToArray()
@@ -615,7 +615,7 @@ namespace qxlpy
             for (int i = 0; i < len; i++) {
                 for (int j = 0; j < 2; j++) {
                     var ex_ref = new ExcelReference(y + i, x - 2 + j);
-                    FillDataCell(ex_ref, kv_pair[j][i].ToString());
+                    FillDataCell(ex_ref, kv_pair[j][i]);
                 }
             }
             return "SUCCESS";

@@ -9,3 +9,4 @@ miscdir = qxlpydir / 'misc'
 site.addsitedir(str(miscdir))
 
 from cs_autogen import autogen
+autogen.autogen(gen_main=False, gen_python=True)
