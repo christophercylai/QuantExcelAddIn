@@ -68,3 +68,8 @@ if ((Test-Path $root\python\python.exe)) {
         .\python\python.exe -m pytest quant
     }
 }
+
+# autogen C# Excel AddIn code
+cd $root\python
+.\python.exe $root\cs_autogen.py
+cd $root
