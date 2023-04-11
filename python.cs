@@ -102,7 +102,7 @@ namespace qxlpy
                 var ret_list = new List<string>();
                 PyList pylist = imp.qxlpyListGlobalObjects();
                 foreach (PyObject pyobj in pylist) {
-                    ret_list.Add(pyobj.ToString());
+                    ret_list.Add(Convert.ToString(pyobj));
                 }
                 object[] ret = ret_list.ToArray();
 

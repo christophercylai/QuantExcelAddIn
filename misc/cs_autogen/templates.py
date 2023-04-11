@@ -598,10 +598,10 @@ PYTHON_FUNC = '        public _FUNC_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 PYTHON_IPT = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 PYTHON_CALL = '                _FUNC_TYPE_ ret = imp._FUNCTION_NAME_(_ARGS_);'
 PYTHON_LIST_RETURN = r'''
-                var ret_list = new List<string>();
+                var ret_list = new List<_LIST_TYPE_>();
                 PyList pylist = imp.qxlpyListGlobalObjects();
                 foreach (PyObject pyobj in pylist) {
-                    ret_list.Add(pyobj._TO_TYPE_());
+                    ret_list.Add(Convert._TO_TYPE_(pyobj));
                 }
                 object[] ret = ret_list.ToArray();
 '''
@@ -609,12 +609,21 @@ PYTHON_DICT_RETURN = r'''
                 var ret = new List<List<object>>();
                 var keys = new List<object>();
                 var values = new List<object>();
-                PyDict pydict = imp.qxlpyGetStrDict(obj_name);
+                PyDict pydict = imp._FUNC_NAME_(obj_name);
                 foreach (PyObject key in pydict) {
                     keys.Add(Convert._TO_KEY_TYPE_(key));
                     values.Add(Convert._TO_VAL_TYPE_(pydict.GetItem(key)));
                 }
                 ret.Add(keys);
                 ret.Add(values);
+'''
+PYTHON_LIST_INPUT = r'''
+                var pylist__ARG_NAME_ = new PyList();
+                _ARG_TYPE_ obj__ARG_NAME_;
+                foreach (object n in _ARG_NAME_) {
+                    obj__ARG_NAME_ = Convert._TO_TYPE_(n);
+                    if (!obj__ARG_NAME_) { throw new ArrayTypeMismatchException("Wrong type in array"); }
+                    pylist__ARG_NAME_.Append(new PyFloat(obj__ARG_NAME_));
+                }
 '''
 ### python.cs string templates ENDS ###
