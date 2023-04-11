@@ -446,7 +446,7 @@ namespace qxlpy
         private static void CheckEmpty(object obj)
         {
             string o = obj.ToString();
-            if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty") {
+            if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty" || o == "ExcelDna.Integration.ExcelMissing") {
                 throw new ArgumentNullException("Missing Arguments");
             }
         }
