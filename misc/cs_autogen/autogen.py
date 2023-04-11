@@ -86,6 +86,21 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             python_func  = re.sub('_FUNCTION_NAME_', func[0], python_func)
             python_call = re.sub('_FUNCTION_NAME_', func[0], python_call)
 
+### argspec example ###
+# >>> import typing
+# >>> import inspect
+# >>> def blah(l: typing.List[str] = [], d: typing.Dict[int, float] = {5: 5.5, 6: 6.6}) -> typing.Dict[str, int]:
+# ...   return {'a': 1}
+# ...
+# >>>
+# >>> argspec = inspect.getfullargspec(blah)
+# >>> argspec
+# FullArgSpec(
+#    args=['l', 'd'], varargs=None, varkw=None,
+#    defaults=([], {5: 5.5, 6: 6.6}), kwonlyargs=[], kwonlydefaults=None,
+#    annotations={'return': typing.Dict[str, int], 'l': typing.List[str], 'd': typing.Dict[int, float]}
+# )
+
             # function contents
             argspec = inspect.getfullargspec(func[1])
             defaults = argspec.defaults
@@ -108,6 +123,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             # return type
             type_checks = ''
             annotations = argspec.annotations  # annotations is a dictionary
+            assert 'return' in annotations, f"'{func[1].__name__}' has no return type"
             ret_type = annotations['return']
             if ret_type in type_map:
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', type_map[ret_type], main_f)
@@ -154,6 +170,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             py_params = ''
             for ea_arg in args:
                 # params
+                assert ea_arg in annotations, f"'{func[1].__name__}': param '{ea_arg}' has no type"
                 p_type = annotations[ea_arg]
                 if p_type in type_map:
                     main_params += f'{type_map[p_type]} '

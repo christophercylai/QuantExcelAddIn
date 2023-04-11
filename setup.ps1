@@ -17,11 +17,18 @@ param(
         HelpMessage = 'Run pytest on the quant Python package'
     )]
     [ValidateSet($true, $false)]
-    [bool]$pytest=$false
+    [bool]$pytest=$false,
+    [Parameter(
+        Mandatory=$false, Position=3, ValueFromPipeline=$false,
+        HelpMessage = 'Logging level'
+    )]
+    [ValidateSet('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')]
+    [bool]$loglvl='INFO'
 )
 
 $root = $pwd.Path
 $env:QXLPYDIR = $root
+$env:QXLPYLOGLEVEL = $loglvl
 
 
 if (!(Test-Path $root\Logs)) { mkdir $root\Logs }
