@@ -547,8 +547,8 @@ MAIN_LIST = r'''
 '''
 MAIN_DICT = r'''
             object[][] kv_pair = {
-                ret["keys"].ToArray(),
-                ret["values"].ToArray()
+                ret[0].ToArray(),
+                ret[1].ToArray()
             };
             int len = kv_pair[0].Length;
             if (len == 0) { return "N/A"; }
@@ -584,7 +584,39 @@ MAIN_DICT = r'''
 
 
 ### python.cs string templates ###
-PYTHON_GIL = """
+PYTHON_BODY = r'''
+using Python.Runtime;
+
+
+namespace qxlpy
+{
+    public class PyExecutor
+    {
+        private readonly PyModule SCOPE;
+
+        public PyExecutor()
+        {
+            string root = Environment.GetEnvironmentVariable("QXLPYDIR");
+
+            string python_dll = $@"{root}\python\python311.dll";
+            Environment.SetEnvironmentVariable("PYTHONNET_PYDLL", python_dll);
+
+            PythonEngine.Initialize();
+            SCOPE = Py.CreateScope();
+
+            using (Py.GIL())
+            {
+                dynamic site = SCOPE.Import("site");
+                site.addsitedir(root);
+            }
+        }
+
+        // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
+_BODY_
+    }
+}
+'''
+PYTHON_GIL = r'''
         {
             using (Py.GIL())
             {_DL_INPUTS_
@@ -593,14 +625,14 @@ _DL_RETURN_
                 return ret;
             }
         }
-"""
+'''
 PYTHON_FUNC = '        public _FUNC_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 PYTHON_IPT = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
 PYTHON_CALL = '                _FUNC_TYPE_ ret = imp._FUNCTION_NAME_(_ARGS_);'
 PYTHON_LIST_RETURN = r'''
                 var ret_list = new List<_LIST_TYPE_>();
-                PyList pylist = imp.qxlpyListGlobalObjects();
-                foreach (PyObject pyobj in pylist) {
+                PyList pylist_ret = imp._FUNC_NAME_(_PY_PARAMS_);
+                foreach (PyObject pyobj in pylist_ret) {
                     ret_list.Add(Convert._TO_TYPE_(pyobj));
                 }
                 object[] ret = ret_list.ToArray();
@@ -609,10 +641,10 @@ PYTHON_DICT_RETURN = r'''
                 var ret = new List<List<object>>();
                 var keys = new List<object>();
                 var values = new List<object>();
-                PyDict pydict = imp._FUNC_NAME_(obj_name);
-                foreach (PyObject key in pydict) {
+                PyDict pydict_ret = imp._FUNC_NAME_(_PY_PARAMS_);
+                foreach (PyObject key in pydict_ret) {
                     keys.Add(Convert._TO_KEY_TYPE_(key));
-                    values.Add(Convert._TO_VAL_TYPE_(pydict.GetItem(key)));
+                    values.Add(Convert._TO_VAL_TYPE_(pydict_ret.GetItem(key)));
                 }
                 ret.Add(keys);
                 ret.Add(values);
@@ -620,17 +652,32 @@ PYTHON_DICT_RETURN = r'''
 PYTHON_LIST_INPUT = r'''
                 var pylist__ARG_NAME_ = new PyList();
                 foreach (object n in _ARG_NAME_) {
-                    _ARG_TYPE_ obj;
+                    _ARG_TYPE_ obj__ARG_NAME_;
                     try {
-                        obj = Convert._TO_TYPE_(n);
+                        obj__ARG_NAME_ = Convert._TO_TYPE_(n);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARG_TYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pylist__ARG_NAME_.Append(new _PY_TYPE_(obj));
+                    pylist__ARG_NAME_.Append(new _PY_TYPE_(obj__ARG_NAME_));
                 }
 '''
 PYTHON_DICT_INPUT = r'''
+                var pydict__ARG_NAME_ = new PyDict();
+                for (int i = 0; i < _ARG_NAME_.GetLength(0); i++) {
+                    string k__ARG_NAME_, v__ARG_NAME_;
+                    try {
+                        k__ARG_NAME_ = Convert._TO_TYPE_(_ARG_NAME_[i, 0]);
+                        v__ARG_NAME_ = Convert._TO_TYPE_(_ARG_NAME_[i, 1]);
+                    } catch (Exception e) {
+                        string error_msg = $"Wrong type in dictionary: ";
+                        error_msg += "'{Convert.ToString(k__ARG_NAME_)}' should be '_ARG_TYPE_' and ";
+                        error_msg += "'{Convert.ToString(v__ARG_NAME_)}' should be '_ARG_TYPE_'";
+                        qxlpyLogMessage(error_msg, "ERROR");
+                        throw new ArrayTypeMismatchException(error_msg);
+                    }
+                    pydict__ARG_NAME_[k__ARG_NAME_] = new _PY_TYPE_(v__ARG_NAME_);
+                }
 '''
 ### python.cs string templates ENDS ###

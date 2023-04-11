@@ -129,8 +129,9 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 python_dl_return = templates.PYTHON_LIST_RETURN
                 python_dl_return = re.sub('_LIST_TYPE_', type_map[ret_type.__args__[0]], python_dl_return)
                 python_dl_return = re.sub('_TO_TYPE_', to_type_map[ret_type.__args__[0]], python_dl_return)
+                python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
                 python_func  = re.sub('_FUNC_TYPE_', 'object[]', python_func)
-                python_call  = re.sub('_FUNC_TYPE_', 'object[]', python_call)
+                python_call  = ''
             elif 'Dict' == ret_type._name:
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
                 type_checks += f'            CheckEmpty(func_pos);\n'
@@ -139,11 +140,12 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 main_ld = templates.MAIN_DICT
 
                 python_func  = re.sub('_FUNC_TYPE_', 'List<List<object>>', python_func)
-                python_call  = re.sub('_FUNC_TYPE_', 'List<List<object>>', python_call)
+                python_call  = ''
                 python_dl_return = templates.PYTHON_DICT_RETURN
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_TO_KEY_TYPE_', to_type_map[ret_type.__args__[0]], python_dl_return)
                 python_dl_return = re.sub('_TO_VAL_TYPE_', to_type_map[ret_type.__args__[1]], python_dl_return)
+                python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
             else:
                 raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
 
@@ -171,6 +173,13 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 elif 'Dict' in str(p_type):
                     main_params += f'{type_map[dict]} '
                     type_checks += f'            DictCheckEmpty({ea_arg});\n'
+
+                    python_dl_input = templates.PYTHON_DICT_INPUT
+                    python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
+                    python_dl_input = re.sub('_ARG_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_TO_TYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_PY_TYPE_', py_type_map[p_type.__args__[0]], python_dl_input)
+                    py_params += f'pydict_{ea_arg}'
                 else:
                     raise KeyError(f'{key}.{func[0]}: {p_type} is not a valid type for C# autogen')
                 main_params += ea_arg
@@ -197,7 +206,8 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
             # python_cs
             python_func = re.sub('_PARAMETERS_', main_params.replace('string func_pos = ""', '')[:-2], python_func)
-            python_call = re.sub('_ARGS_', py_params, python_call)
+            python_call = re.sub('_ARGS_', py_params[:-2], python_call)
+            python_dl_return = re.sub('_PY_PARAMS_', py_params[:-2], python_dl_return)
             python_ipt = templates.PYTHON_IPT
             python_ipt = re.sub('_MODULE_NAME_', key, python_ipt)
 
@@ -212,20 +222,24 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             python_gil = re.sub('_DL_INPUTS_', python_dl_input, python_gil)
             python_gil = re.sub('_BODY_', python_f_body, python_gil)
             python_gil = re.sub('_DL_RETURN_', python_dl_return, python_gil)
-            python_cs += f'{python_func}'
-            python_cs += f'{python_gil}'
+            python_cs += python_func
+            python_cs += f'{python_gil}\n'
+            python_body =re.sub('_BODY_', python_cs, templates.PYTHON_BODY)
 
     if gen_main:
         main_body = re.sub('_BODY_', main_cs, templates.MAIN_BODY)
+        write_to = ''
         if dryrun:
-            print(main_body)
+            write_to = 'main.cs.bak'
         else:
-            with open(str(qxlpydir / 'main.cs'), 'w') as main_cs_f:
-                main_cs_f.write(main_body)
+            write_to = 'main.cs'
+        with open(str(qxlpydir / write_to), 'w') as main_cs_f:
+            main_cs_f.write(main_body)
 
     if gen_python:
         if dryrun:
-            print(python_cs)
+            write_to = 'python.cs.bak'
         else:
-            with open(str(qxlpydir / 'python.cs'), 'w') as python_cs_f:
-                python_cs_f.write(python_cs)
+            write_to = 'python.cs'
+        with open(str(qxlpydir / write_to), 'w') as python_cs_f:
+            python_cs_f.write(python_body)
