@@ -16,7 +16,7 @@ def set_log_level(logger):
     set logging level for a logger
     default is DEBUG
     """
-    log_lvl = getenv('QXLPYLOGLEVEL', 'DEBUG')
+    log_lvl = getenv('QXLPYLOGLEVEL', 'INFO')
     loglvldict = {
         'CRITICAL': logging.CRITICAL,
         'ERROR': logging.ERROR,

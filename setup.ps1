@@ -23,7 +23,7 @@ param(
         HelpMessage = 'Logging level'
     )]
     [ValidateSet('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL')]
-    [bool]$loglvl='INFO'
+    [string]$loglvl='INFO'
 )
 
 $root = $pwd.Path
