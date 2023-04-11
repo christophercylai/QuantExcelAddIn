@@ -666,18 +666,19 @@ PYTHON_LIST_INPUT = r'''
 PYTHON_DICT_INPUT = r'''
                 var pydict__ARG_NAME_ = new PyDict();
                 for (int i = 0; i < _ARG_NAME_.GetLength(0); i++) {
-                    string k__ARG_NAME_, v__ARG_NAME_;
+                    _KEY_TYPE_ k__ARG_NAME_;
+                    _VAL_TYPE_ v__ARG_NAME_;
                     try {
-                        k__ARG_NAME_ = Convert._TO_TYPE_(_ARG_NAME_[i, 0]);
-                        v__ARG_NAME_ = Convert._TO_TYPE_(_ARG_NAME_[i, 1]);
+                        k__ARG_NAME_ = Convert._TO_KEYTYPE_(_ARG_NAME_[i, 0]);
+                        v__ARG_NAME_ = Convert._TO_VALTYPE_(_ARG_NAME_[i, 1]);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in dictionary: ";
-                        error_msg += "'{Convert.ToString(k__ARG_NAME_)}' should be '_ARG_TYPE_' and ";
-                        error_msg += "'{Convert.ToString(v__ARG_NAME_)}' should be '_ARG_TYPE_'";
+                        error_msg += "'{Convert.ToString(k__ARG_NAME_)}' should be '_KEY_TYPE_' and ";
+                        error_msg += "'{Convert.ToString(v__ARG_NAME_)}' should be '_VAL_TYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pydict__ARG_NAME_[k__ARG_NAME_] = new _PY_TYPE_(v__ARG_NAME_);
+                    pydict__ARG_NAME_[k__ARG_NAME_.ToString()] = new _PY_TYPE_VAL_(v__ARG_NAME_);
                 }
 '''
 ### python.cs string templates ENDS ###

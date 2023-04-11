@@ -23,7 +23,6 @@ def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     # returns a dictionary object
     return global_obj.get_obj(obj_name)
 
-# TODO - to be implemented by autogen
 def qxlpyStoreStrList(objlist: List[str]) -> str:
     """
     store string list and return the id
@@ -37,7 +36,6 @@ def qxlpyListGlobalObjects() -> List[str]:
     # returns a list of stored objects
     return global_obj.list_objs()
 
-# TODO - to be implemented by autogen
 def qxlpyDeleteObject(obj_name: str) -> str:
     """
     delete a cached object by id

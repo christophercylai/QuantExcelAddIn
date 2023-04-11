@@ -61,7 +61,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
     python_cs = ''
 
     funcs_list = []
-    # key is file name and value is function name(s)
+    # key is file name and value is function name
     for key, value in autogen_info.items():
         if value in funcs_list:
             continue
@@ -75,7 +75,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
             python_func = templates.PYTHON_FUNC
             python_call = templates.PYTHON_CALL
-            python_dl_input = ''
+            python_dl_inputs = ''
             python_dl_return = ''
 
             # function name
@@ -172,6 +172,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 # params
                 assert ea_arg in annotations, f"'{func[1].__name__}': param '{ea_arg}' has no type"
                 p_type = annotations[ea_arg]
+                python_dl_input = ''
                 if p_type in type_map:
                     main_params += f'{type_map[p_type]} '
                     type_checks += f'            CheckEmpty({ea_arg});\n'
@@ -193,9 +194,11 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
                     python_dl_input = templates.PYTHON_DICT_INPUT
                     python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
-                    python_dl_input = re.sub('_ARG_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_TO_TYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_PY_TYPE_', py_type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_KEY_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_VAL_TYPE_', type_map[p_type.__args__[1]], python_dl_input)
+                    python_dl_input = re.sub('_TO_KEYTYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_TO_VALTYPE_', to_type_map[p_type.__args__[1]], python_dl_input)
+                    python_dl_input = re.sub('_PY_TYPE_VAL_', py_type_map[p_type.__args__[1]], python_dl_input)
                     py_params += f'pydict_{ea_arg}'
                 else:
                     raise KeyError(f'{key}.{func[0]}: {p_type} is not a valid type for C# autogen')
@@ -204,6 +207,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     main_params += f' = "{arg_default[ea_arg]}"'
                 main_params += ', '
                 py_params += ', '
+                python_dl_inputs += python_dl_input
 
             main_params += 'string func_pos = ""'
             main_f = re.sub('_PARAMETERS_', main_params, main_f)
@@ -236,7 +240,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             for ea_line in python_array:
                 python_f_body += ea_line
             python_gil = templates.PYTHON_GIL
-            python_gil = re.sub('_DL_INPUTS_', python_dl_input, python_gil)
+            python_gil = re.sub('_DL_INPUTS_', python_dl_inputs, python_gil)
             python_gil = re.sub('_BODY_', python_f_body, python_gil)
             python_gil = re.sub('_DL_RETURN_', python_dl_return, python_gil)
             python_cs += python_func
