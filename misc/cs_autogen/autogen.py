@@ -48,6 +48,14 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
         float: 'ToDouble'
     }
 
+    # Reference
+    # https://pythonnet.github.io/pythonnet/reference.html
+    py_type_map = {
+        str: 'PyString',
+        int: 'PyInt',
+        float: 'PyFloat'
+    }
+
     # autogen scripts variables
     main_cs = ''
     python_cs = ''
@@ -158,6 +166,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
                     python_dl_input = re.sub('_ARG_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
                     python_dl_input = re.sub('_TO_TYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_PY_TYPE_', py_type_map[p_type.__args__[0]], python_dl_input)
                     py_params += f'pylist_{ea_arg}'
                 elif 'Dict' in str(p_type):
                     main_params += f'{type_map[dict]} '

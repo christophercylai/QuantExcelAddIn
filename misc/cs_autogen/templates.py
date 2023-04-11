@@ -619,11 +619,15 @@ PYTHON_DICT_RETURN = r'''
 '''
 PYTHON_LIST_INPUT = r'''
                 var pylist__ARG_NAME_ = new PyList();
-                _ARG_TYPE_ obj__ARG_NAME_;
                 foreach (object n in _ARG_NAME_) {
-                    obj__ARG_NAME_ = Convert._TO_TYPE_(n);
-                    if (!obj__ARG_NAME_) { throw new ArrayTypeMismatchException("Wrong type in array"); }
-                    pylist__ARG_NAME_.Append(new PyFloat(obj__ARG_NAME_));
+                    try {
+                        _ARG_TYPE_ obj = Convert._TO_TYPE_(n);
+                    } catch (Exception e) {
+                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARG_TYPE_'";
+                        qxlpyLogMessage(error_msg, "ERROR");
+                        throw new ArrayTypeMismatchException(error_msg);
+                    }
+                    pylist__ARG_NAME_.Append(new _PY_TYPE_(obj));
                 }
 '''
 ### python.cs string templates ENDS ###

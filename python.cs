@@ -40,17 +40,20 @@ namespace qxlpy
             // returns the address of the Calculate py obj
             using (Py.GIL())
             {
-                var pylist = new PyList();
-                double dub;
-                bool parse_ok;
+                var pylist_dub_list = new PyList();
                 foreach (object n in dub_list) {
-                    parse_ok = Double.TryParse(n.ToString(), out dub);
-                    if (!parse_ok) { throw new ArrayTypeMismatchException("Wrong type in array"); }
-                    pylist.Append(new PyFloat(dub));
+                    try {
+                        double obj = Convert.ToDouble(n);
+                    } catch (Exception e) {
+                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type 'double'";
+                        qxlpyLogMessage(error_msg, "ERROR");
+                        throw new ArrayTypeMismatchException(error_msg);
+                    }
+                    pylist_dub_list.Append(new PyFloat(obj));
                 }
 
                 dynamic imp = SCOPE.Import("quant.calculate");
-                string ret = imp.qxlpyGetCalculate(pylist);
+                string ret = imp.qxlpyGetCalculate(pylist_dub_list);
                 return ret;
             }
         }
