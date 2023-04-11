@@ -8,7 +8,6 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 
 namespace qxlpy
-
 {
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
@@ -445,7 +444,8 @@ namespace qxlpy
 
         private static void CheckEmpty(object obj)
         {
-            if (obj.ToString() == "") {
+            string o = obj.ToString();
+            if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty") {
                 throw new ArgumentNullException("Missing Arguments");
             }
         }

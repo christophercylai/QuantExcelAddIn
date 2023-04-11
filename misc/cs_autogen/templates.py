@@ -9,7 +9,6 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 
 namespace qxlpy
-
 {
     [ComVisible(true)]
     public class RibbonController : ExcelRibbon
@@ -446,7 +445,8 @@ namespace qxlpy
 
         private static void CheckEmpty(object obj)
         {
-            if (obj.ToString() == "") {
+            string o = obj.ToString();
+            if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty") {
                 throw new ArgumentNullException("Missing Arguments");
             }
         }
@@ -620,8 +620,9 @@ PYTHON_DICT_RETURN = r'''
 PYTHON_LIST_INPUT = r'''
                 var pylist__ARG_NAME_ = new PyList();
                 foreach (object n in _ARG_NAME_) {
+                    _ARG_TYPE_ obj;
                     try {
-                        _ARG_TYPE_ obj = Convert._TO_TYPE_(n);
+                        obj = Convert._TO_TYPE_(n);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARG_TYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
@@ -629,5 +630,7 @@ PYTHON_LIST_INPUT = r'''
                     }
                     pylist__ARG_NAME_.Append(new _PY_TYPE_(obj));
                 }
+'''
+PYTHON_DICT_INPUT = r'''
 '''
 ### python.cs string templates ENDS ###

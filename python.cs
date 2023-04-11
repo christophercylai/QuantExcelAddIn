@@ -42,8 +42,9 @@ namespace qxlpy
             {
                 var pylist_dub_list = new PyList();
                 foreach (object n in dub_list) {
+                    double obj;
                     try {
-                        double obj = Convert.ToDouble(n);
+                        obj = Convert.ToDouble(n);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type 'double'";
                         qxlpyLogMessage(error_msg, "ERROR");
@@ -78,14 +79,17 @@ namespace qxlpy
             {
                 var pydict = new PyDict();
                 string k, v;
-                bool parse_ok;
-                int dict_len = objdict.GetLength(0);
-                string empty = "ExcelDna.Integration.ExcelEmpty";
-                for (int i = 0; i < dict_len; i++) {
-                    k = objdict[i, 0].ToString();
-                    v = objdict[i, 1].ToString();
-                    parse_ok = k != empty && v != empty ;
-                    if (!parse_ok) { throw new ArrayTypeMismatchException("There is an empty string"); }
+                for (int i = 0; i < objdict.GetLength(0); i++) {
+                    try {
+                        k = Convert.ToString(objdict[i, 0]);
+                        v = Convert.ToString(objdict[i, 1]);
+                    } catch (Exception e) {
+                        string error_msg = $"Wrong type in dictionary: ";
+                        error_msg += "'{Convert.ToString(k)}' should be 'string' and ";
+                        error_msg += "'{Convert.ToString(v)}' should be 'string'";
+                        qxlpyLogMessage(error_msg, "ERROR");
+                        throw new ArrayTypeMismatchException(error_msg);
+                    }
                     pydict[k] = new PyString(v);
                 }
 
