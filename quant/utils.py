@@ -3,11 +3,10 @@ Qxlpy Utilities
 """
 from typing import List, Dict
 import pandas as pd
+import plotly.express as px
 
 from quant import py_logger
 from . import global_obj
-
-pd.options.plotting.backend = "plotly"
 
 # pylint: disable=invalid-name
 
@@ -26,17 +25,39 @@ def qxlpyCSharpAutogenTest(
         for ea_int in num_list:
             if not str(ea_int) in mix_dict:
                 mix_dict[str(ea_int)] = ea_int * multiplier
-
     return mix_dict
 
-def qxlpyPlotData(
-        cached_arrays: List[str], periods: int,
-        labels: List[str], startdate: str = '2022/12/01',
+def qxlpyPlotDataFrame(
+        dframe_obj: str,
+        plot_type: str = "line",
         title: str = "Data Points with Plotly",
-        show_plot: bool = False
+        dry_run: bool = False
     )-> str:
     """
-    Plot cached python list
+    Plot cached Pandas DataFrame obj
+    startdate has to be in string, such as: '2022/12/01'
+    """
+    plot_obj = {
+        "line": px.line,
+        "bar": px.bar,
+        "scatter": px.scatter
+    }
+    if plot_type not in plot_obj:
+        errmsg = f'Plot type "{plot_type}" is not supported. Plot types: {list(plot_obj.keys())}'
+        py_logger.error(errmsg)
+        raise KeyError(errmsg)
+    fig = plot_obj[plot_type](global_obj.get_obj(dframe_obj), title=title)
+    if not dry_run:
+        fig.show()
+    return 'SUCCESS'
+
+def qxlpyCreatePlotDataFrame(
+        cached_arrays: List[str], labels: List[str],
+        periods: int, startdate: str = '2022/12/01'
+    )-> str:
+    """
+    Take a list of cached List[float] objs and create a DataFrame
+    startdate must be in string format that looks like 2022/12/01
     """
     cached_objs = global_obj.list_objs()
     plot_obj = {}
@@ -64,14 +85,4 @@ def qxlpyPlotData(
         plot_obj,
         index = pd.date_range(start=startdate, freq="M", periods=periods)
     )
-
-    data_frame_handle = global_obj.store_obj(df)
-
-    # plotting
-    plotly = df.plot(
-        title = title
-    )
-    if show_plot:
-        plotly.show()
-
-    return data_frame_handle
+    return global_obj.store_obj(df)
