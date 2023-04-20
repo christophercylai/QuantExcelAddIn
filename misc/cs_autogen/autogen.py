@@ -24,10 +24,10 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
         funcs = inspect.getmembers(mod, inspect.isfunction)
         qxlpy_f = []
         for ea_f in funcs:
-            if 'qxlpy' in ea_f[0]:
+            if ea_f[0].startswith('qxlpy'):
                 qxlpy_f.append(ea_f)  # ea_f is a tuple = (func_name, func_obj)
         if qxlpy_f:
-            autogen_info[filename] = funcs
+            autogen_info[filename] = qxlpy_f
 
     # keys are python types, values are C# types
     type_map = {
@@ -89,26 +89,25 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 ### argspec example ###
 # >>> import typing
 # >>> import inspect
-# >>> def blah(l: typing.List[str] = [], d: typing.Dict[int, float] = {5: 5.5, 6: 6.6}) -> typing.Dict[str, int]:
+# >>> def blah(s: str, l: typing.List[str] = [], d: typing.Dict[int, float] = {5: 5.5, 6: 6.6}) -> typing.Dict[str, int]:
 # ...   return {'a': 1}
 # ...
 # >>>
 # >>> argspec = inspect.getfullargspec(blah)
 # >>> argspec
 # FullArgSpec(
-#    args=['l', 'd'], varargs=None, varkw=None,
+#    args=['s', 'l', 'd'], varargs=None, varkw=None,
 #    defaults=([], {5: 5.5, 6: 6.6}), kwonlyargs=[], kwonlydefaults=None,
-#    annotations={'return': typing.Dict[str, int], 'l': typing.List[str], 'd': typing.Dict[int, float]}
+#    annotations={'return': typing.Dict[str, int], 's': str, 'l': typing.List[str], 'd': typing.Dict[int, float]}
 # )
 
             # function contents
             argspec = inspect.getfullargspec(func[1])
-            defaults = argspec.defaults
             arg_default = {}
             args = argspec.args
             args.reverse()  # params with defaults cannot precede params without
-            if defaults:
-                defaults = list(defaults)
+            if argspec.defaults:
+                defaults = list(argspec.defaults)
                 defaults.reverse()
                 for num in range(len(defaults)):
                     arg_default[args[num]] = defaults[num]
@@ -203,8 +202,13 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 else:
                     raise KeyError(f'{key}.{func[0]}: {p_type} is not a valid type for C# autogen')
                 main_params += ea_arg
-                if arg_default[ea_arg]:
-                    main_params += f' = "{arg_default[ea_arg]}"'
+                if arg_default[ea_arg] is not None:
+                    if p_type == str:
+                        main_params += f' = "{arg_default[ea_arg]}"'
+                    elif p_type == bool:
+                        main_params += f' = {arg_default[ea_arg]}'.lower()
+                    else:
+                        main_params += f' = {arg_default[ea_arg]}'
                 main_params += ', '
                 py_params += ', '
                 python_dl_inputs += python_dl_input

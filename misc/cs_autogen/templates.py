@@ -220,7 +220,7 @@ namespace qxlpy
             param_name_range.Interior.Color = Color.FromArgb(77, 241, 255, 205);
 
             dynamic nf_range = xlApp.Cells(y + p_len, x + 1);
-            new_formula += "CELL(\"address\", " + nf_range.Address + "))";
+            new_formula += "CELL(\"address\", " + nf_range.Address.Replace("$", "") + "))";
             ExManip.RangeEmpty(nf_range, backtrack);
 
             sheet.Columns(x).Autofit();
@@ -365,7 +365,9 @@ namespace qxlpy
                     ea_range.Clear();
                 }
                 bt[0].Value = AutoFill.old_formula;
-                throw new ApplicationException("Cannot overwrite non-empty cell(s): " + range.Address);
+                string errmsg = "Cannot overwrite non-empty cell(s): " + range.Address;
+                WriteLog(errmsg, "ERROR");
+                throw new ApplicationException(errmsg);
 
             }
             bt.Add(range);

@@ -29,6 +29,12 @@ def qxlpyStoreStrList(objlist: List[str]) -> str:
     """
     return global_obj.store_obj(objlist)
 
+def qxlpyStoreDoubleList(objlist: List[float]) -> str:
+    """
+    store float list and return the id
+    """
+    return global_obj.store_obj(objlist)
+
 def qxlpyListGlobalObjects() -> List[str]:
     """
     return a list of cached object ids

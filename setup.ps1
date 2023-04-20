@@ -33,7 +33,7 @@ $env:QXLPYLOGLEVEL = $loglvl
 
 if (!(Test-Path $root\Logs)) { mkdir $root\Logs }
 
-# install Python 3.7.9 embeddable package
+# install Python 3.11.3 embeddable package
 if (!(Test-Path $root\python)) {
     if ($bitness -eq 32) {
         wget -Uri https://www.python.org/ftp/python/3.11.3/python-3.11.3-embed-win32.zip -Outfile $root\python310.zip
