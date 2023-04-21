@@ -52,8 +52,7 @@ def qxlpyPlotDataFrame(
     return 'SUCCESS'
 
 def qxlpyCreatePlotDataFrame(
-        cached_arrays: List[str], labels: List[str],
-        periods: int, startdate: str = '2022/12/01'
+        cached_arrays: List[str], labels: List[str], startdate: str
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame
@@ -61,6 +60,7 @@ def qxlpyCreatePlotDataFrame(
     """
     cached_objs = global_obj.list_objs()
     plot_obj = {}
+    periods = None
     for pos in range(len(cached_arrays)):  # pylint: disable=consider-using-enumerate
         handle = cached_arrays[pos]
         # check obj exists
@@ -77,8 +77,10 @@ def qxlpyCreatePlotDataFrame(
             py_logger.error(errmsg)
             raise TypeError(errmsg)
         # check obj length
+        if not periods:
+            periods = len(plot_obj[labels[pos]])
         if len(plot_obj[labels[pos]]) != periods:
-            errmsg = f'Length of {labels[pos]} is not the same as periods: {periods}'
+            errmsg = f'{cached_arrays} cannot be jagged: all elements must have the same length'
             py_logger.error(errmsg)
 
     df = pd.DataFrame(

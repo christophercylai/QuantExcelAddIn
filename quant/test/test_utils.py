@@ -9,6 +9,7 @@ def test_plot_data():
     boa = objects.qxlpyStoreDoubleList([1, 3, 2])
     dframe = utils.qxlpyCreatePlotDataFrame(
         [tdbank, bmo, boa],
-        ['td', 'bmo', 'boa'], 3
+        ['td', 'bmo', 'boa'],
+        '2022/12/01'
     )
     utils.qxlpyPlotDataFrame(dframe, "line", "dummy", True)

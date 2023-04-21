@@ -134,6 +134,16 @@ if ($exitcode -ne 0) {
 # autogen C# Excel AddIn code
 echo ""
 echo "### C# Excel AddIn Autogen ###"
+if (!(Test-Path $root\obj)) {
+    devenv qxlpy.sln
+    echo "Loading the Qxlpy project for the first time to generate the needed setting files."
+    echo "Please select the '${build_type}' setting in VS 2022."
+    echo "Waiting for all the setting files to be generated ..."
+    while (!(Test-Path "${root}\obj\${build_type}\net6.0-windows\Interop.Microsoft.Office.Interop.Excel.dll")) {
+        Start-Sleep -Seconds 5
+    }
+    echo ""
+}
 cd $root\python
 .\python.exe $root\cs_autogen.py
 $status = $?
