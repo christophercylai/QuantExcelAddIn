@@ -7,11 +7,12 @@ from quant import py_logger
 GLOBAL_OBJS = {}
 
 
-def store_obj(obj) -> str:
+def store_obj(obj, prefix: str = "") -> str:
     """
     store an object and return it's id
     """
-    obj_name = str(obj.__class__).split("'")[1] + '_' + str(id(obj))
+    prefix = prefix if not prefix else f"{prefix}_"
+    obj_name = prefix + str(obj.__class__).split("'")[1] + '_' + str(id(obj))
     GLOBAL_OBJS[obj_name] = obj
     return obj_name
 

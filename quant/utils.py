@@ -1,7 +1,7 @@
 """
 Qxlpy Utilities
 """
-from typing import List, Dict
+from typing import List
 from datetime import datetime
 import pandas as pd
 import plotly.express as px
@@ -11,22 +11,6 @@ from . import global_obj
 
 # pylint: disable=invalid-name
 
-
-def qxlpyCSharpAutogenTest(
-        num_list: List[int], mix_dict: Dict[str, float],
-        multiplier: float = 3.14, overwrite: bool = True
-    )-> Dict[str, float]:
-    """
-    Test CSharp autoget script
-    """
-    if overwrite:
-        for ea_int in num_list:
-            mix_dict[str(ea_int)] = ea_int * multiplier
-    else:
-        for ea_int in num_list:
-            if not str(ea_int) in mix_dict:
-                mix_dict[str(ea_int)] = ea_int * multiplier
-    return mix_dict
 
 def qxlpyPlotDataFrame(
         dframe_obj: str,
@@ -54,7 +38,8 @@ def qxlpyPlotDataFrame(
     return 'SUCCESS'
 
 def qxlpyCreatePlotDataFrame(
-        cached_arrays: List[str], labels: List[str], startdate: int = 20221201
+        cached_arrays: List[str], df_prefix: str = "None",
+        labels: List[str], startdate: int = 20221201,
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame
