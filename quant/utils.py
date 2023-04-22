@@ -31,12 +31,13 @@ def qxlpyCSharpAutogenTest(
 def qxlpyPlotDataFrame(
         dframe_obj: str,
         plot_type: str = "line",
-        title: str = "Data Points with Plotly",
+        title: str = "Data Chart with Plotly",
         dry_run: bool = False
     )-> str:
     """
     Plot cached Pandas DataFrame obj
     plot_type:: line, bar, scatter
+    dry_run:: TRUE, FALSE
     """
     plot_obj = {
         "line": px.line,

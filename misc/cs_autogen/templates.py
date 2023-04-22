@@ -169,13 +169,13 @@ _COMMENTS_MAP_
             // parsing the comment for a list of default values
             StringReader reader = new StringReader(comment);
             string ea_line = "";
-            var param_choices = new Dictionary<string, string[]> { };
+            var param_choices = new Dictionary<string, string> { };
             while ((ea_line = reader.ReadLine()) != null) {
                 if (ea_line.Contains("::")) {
                     string[] p_choice = ea_line.Split("::");
                     if (p_choice.Length == 2) {
                         string funcname = p_choice[0].Replace(" ", "");
-                        string[] f_params = p_choice[1].Replace(" ", "").Split(",");
+                        string f_params = p_choice[1].Replace(" ", "");
                         param_choices.Add(funcname, f_params);
                     }
                 }
@@ -184,12 +184,13 @@ _COMMENTS_MAP_
             // Loop through params and formula
             string new_formula = "=" + f + "(";
             int ad_row_count = 1;  // count the rows of array and dict to the right of func name
-            string comma, param, def_value;
+            string comma, param, def_value = "", choices = "";
             comma = ", ";
             Type param_type;
             for (int i = 1; i < p_len; i++) {
                 param_type = param_info[i - 1].ParameterType;
                 param = param_info[i - 1].Name;
+                choices = param_choices.ContainsKey(param) ? param_choices[param] : "";
                 def_value = param_info[i - 1].HasDefaultValue ? param_info[i - 1].DefaultValue.ToString() : "";
                 if (param_type.Name.Contains("[]")) {
                     // array type
@@ -209,6 +210,7 @@ _COMMENTS_MAP_
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                     def_value = "";
+                    choices = "";
                 } else if (param_type.Name.Contains("[,]")) {
                     // dict type
                     // title cells
@@ -234,6 +236,7 @@ _COMMENTS_MAP_
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                     def_value = "";
+                    choices = "";
                 } else {
                     // bool, str, int, double types
                     new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
@@ -241,6 +244,16 @@ _COMMENTS_MAP_
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x), backtrack);
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x + 1), backtrack);
                 xlApp.Cells(y + i, x).Value = param;
+                if (choices != "") {
+                    xlApp.Cells(y + i, x + 1).Validation.Delete();
+                    xlApp.Cells(y + i, x + 1).Validation.Add(
+                        Excel.XlDVType.xlValidateList,
+                        Excel.XlDVAlertStyle.xlValidAlertInformation,
+                        Excel.XlFormatConditionOperator.xlBetween,
+                        choices, Type.Missing
+                    );
+                    xlApp.Cells(y + i, x + 1).Validation.InCellDropdown = true;
+                }
                 if (def_value != "") {
                     xlApp.Cells(y + i, x + 1).Value = def_value;
                 }
