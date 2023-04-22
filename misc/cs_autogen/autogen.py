@@ -58,15 +58,17 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
     # autogen scripts variables
     main_cs = ''
+    main_docstring_func = ''
     python_cs = ''
 
     funcs_list = []
-    # key is file name and value is function name
+    # key is file name and value is list of function names
     for key, value in autogen_info.items():
-        if value in funcs_list:
-            continue
-        funcs_list.append(value)
         for func in value:
+            if func[0] in funcs_list:
+                continue
+            funcs_list.append(func[0])
+
             main_ret_pye = templates.MAIN_RET_PYE
             main_f = templates.MAIN_F
             main_return_s = templates.MAIN_RETURN_S
@@ -79,12 +81,18 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             python_dl_return = ''
 
             # function name
-            # func[0] is the function name and func[2] are the parameters
+            # func[0] is the function name and func[1] are the parameters
             main_f = re.sub('_FUNCTION_NAME_', func[0], main_f)
             main_ret_pye = re.sub('_FUNCTION_NAME_', func[0], main_ret_pye)
             main_excel = re.sub('_FUNCTION_NAME_', func[0], main_excel)
             python_func  = re.sub('_FUNCTION_NAME_', func[0], python_func)
             python_call = re.sub('_FUNCTION_NAME_', func[0], python_call)
+
+            # docstring
+            docstring = inspect.getdoc(func[1])
+            main_docstring = re.sub("_FUNCTION_NAME_", func[0], templates.MAIN_DOCSTRING)
+            main_docstring = re.sub("_DOCSTRING_", docstring, main_docstring)
+            main_docstring_func += main_docstring
 
 ### argspec example ###
 # >>> import typing
@@ -253,6 +261,8 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
     if gen_main:
         main_body = re.sub('_BODY_', main_cs, templates.MAIN_BODY)
+        main_docstring_func = main_docstring_func[:-2]  # remove comma and newline
+        main_body = re.sub('_COMMENTS_MAP_', main_docstring_func, main_body)
         write_to = ''
         if dryrun:
             write_to = 'main.cs.bak'

@@ -117,6 +117,19 @@ namespace qxlpy
             return match_f.Value;
         }
 
+        private static string GetComments(string func_name)
+        {
+            var comments_map = new Dictionary<string, string>() {
+_COMMENTS_MAP_
+            };
+            if (! comments_map.ContainsKey(func_name)) {
+                string errmsg = $"Python function '{func_name}' does not have a docstring";
+                ExManip.WriteLog(errmsg, "ERROR");
+                throw new IndexOutOfRangeException(errmsg);
+            }
+            return comments_map[func_name];
+        }
+
         public static void AutoFuncFormat()
         {
             // auto format a UDF from ExcelFunc
@@ -519,6 +532,11 @@ MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTION_NAME_")]'
 MAIN_F = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 MAIN_RET_PYE = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
 MAIN_RETURN_S = '            return _RET_;'
+MAIN_DOCSTRING = '''                {
+                    "_FUNCTION_NAME_",
+@"_DOCSTRING_"
+                },
+'''
 MAIN_LIST = r'''
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
