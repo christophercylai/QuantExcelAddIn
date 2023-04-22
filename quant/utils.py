@@ -1,7 +1,8 @@
 """
 Qxlpy Utilities
 """
-from typing import List, Dict
+from typing import List
+from datetime import datetime
 import pandas as pd
 import plotly.express as px
 
@@ -11,31 +12,16 @@ from . import global_obj
 # pylint: disable=invalid-name
 
 
-def qxlpyCSharpAutogenTest(
-        num_list: List[int], mix_dict: Dict[str, float],
-        multiplier: float = 3.14, overwrite: bool = True
-    )-> Dict[str, float]:
-    """
-    Test CSharp autoget script
-    """
-    if overwrite:
-        for ea_int in num_list:
-            mix_dict[str(ea_int)] = ea_int * multiplier
-    else:
-        for ea_int in num_list:
-            if not str(ea_int) in mix_dict:
-                mix_dict[str(ea_int)] = ea_int * multiplier
-    return mix_dict
-
 def qxlpyPlotDataFrame(
         dframe_obj: str,
         plot_type: str = "line",
-        title: str = "Data Points with Plotly",
+        title: str = "Data Chart with Plotly",
         dry_run: bool = False
     )-> str:
     """
     Plot cached Pandas DataFrame obj
-    startdate has to be in string, such as: '2022/12/01'
+    plot_type:: line, bar, scatter
+    dry_run:: TRUE, FALSE
     """
     plot_obj = {
         "line": px.line,
@@ -52,12 +38,14 @@ def qxlpyPlotDataFrame(
     return 'SUCCESS'
 
 def qxlpyCreatePlotDataFrame(
-        cached_arrays: List[str], labels: List[str], startdate: str
+        cached_arrays: List[str], labels: List[str],
+        startdate: int = 20221201, df_prefix: str = "None",
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame
-    startdate must be in string format that looks like 2022/12/01
     """
+    s_date = datetime.strptime(str(startdate), "%Y%m%d")
+    startdate = s_date.strftime("%Y/%m/%d")
     cached_objs = global_obj.list_objs()
     plot_obj = {}
     periods = None
@@ -87,4 +75,4 @@ def qxlpyCreatePlotDataFrame(
         plot_obj,
         index = pd.date_range(start=startdate, freq="M", periods=periods)
     )
-    return global_obj.store_obj(df)
+    return global_obj.store_obj(df, df_prefix)

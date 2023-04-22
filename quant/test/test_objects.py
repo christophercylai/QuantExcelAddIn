@@ -8,7 +8,9 @@ def test_objects():
         "A": "Apple",
         "B": "Bee"
     }
-    dic = O.qxlpyStoreStrDict(strdict)
+    prefix = "test_obj_dict"
+    dic = O.qxlpyStoreStrDict(strdict, prefix)
+    assert dic.startswith(prefix)
 
     strlist = ["a", "b"]
     lst = O.qxlpyStoreStrList(strlist)

@@ -8,13 +8,13 @@ from . import global_obj
 # pylint: disable=invalid-name
 
 
-def qxlpyStoreStrDict(objdict: Dict[str, str]) -> str:
+def qxlpyStoreStrDict(objdict: Dict[str, str], prefix: str = "None") -> str:
     """
     store string dictionary and return the id
     """
     # returns the address of the Calculate py obj
     # <key: str, value: str>
-    return global_obj.store_obj(objdict)
+    return global_obj.store_obj(objdict, prefix)
 
 def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     """
@@ -23,17 +23,17 @@ def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     # returns a dictionary object
     return global_obj.get_obj(obj_name)
 
-def qxlpyStoreStrList(objlist: List[str]) -> str:
+def qxlpyStoreStrList(objlist: List[str], prefix: str = "None") -> str:
     """
     store string list and return the id
     """
-    return global_obj.store_obj(objlist)
+    return global_obj.store_obj(objlist, prefix)
 
-def qxlpyStoreDoubleList(objlist: List[float]) -> str:
+def qxlpyStoreDoubleList(objlist: List[float], prefix: str = "None") -> str:
     """
     store float list and return the id
     """
-    return global_obj.store_obj(objlist)
+    return global_obj.store_obj(objlist, prefix)
 
 def qxlpyListGlobalObjects() -> List[str]:
     """

@@ -20,13 +20,21 @@ namespace qxlpy
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
-            <group id='qxlpy' label='QXLPY'>
+            <group id='qxlpy_e' label='Function Expansion'>
               <button id='expandfunc' label='Expand Function'
                 onAction='expandFuncButton' size='large' screentip='Expand Function (Ctrl-INS)'
                 imageMso='ConditionalFormattingColorScalesGallery' />
+            </group >
+            <group id='qxlpy_d' label='Function Deletion'>
               <button id='removefunc' label='Remove Function'
-                onAction='removeFuncButton' size='large' screentip='Remove Function (Ctrl-Shift-DEL)'
+                onAction='removeFuncButton' size='large' screentip='Remove Function (Shift-DEL)'
+                imageMso='RecordsDeleteRecord' />
+              <button id='removedata' label='Remove Data'
+                onAction='removeDataButton' size='large' screentip='Remove Data (Ctrl-DEL)'
                 imageMso='TableDelete' />
+              <button id='removeall' label='Remove Function and Data'
+                onAction='removeAllButton' size='large' screentip='Remove Function and Data (Ctrl-Shift-DEL)'
+                imageMso='QueryDelete' />
             </group >
           </tab>
         </tabs>
@@ -45,6 +53,16 @@ namespace qxlpy
         }
 
         public void removeFuncButton(IRibbonControl control)
+        {
+            AutoFill.AutoFuncClear();
+        }
+
+        public void removeDataButton(IRibbonControl control)
+        {
+            AutoFill.AutoDataClear();
+        }
+
+        public void removeAllButton(IRibbonControl control)
         {
             AutoFill.AutoDataClear();
             AutoFill.AutoFuncClear();
@@ -117,6 +135,19 @@ namespace qxlpy
             return match_f.Value;
         }
 
+        private static string GetComment(string func_name)
+        {
+            var comments_map = new Dictionary<string, string>() {
+_COMMENTS_MAP_
+            };
+            if (! comments_map.ContainsKey(func_name)) {
+                string errmsg = $"Python function '{func_name}' does not have a docstring";
+                ExManip.WriteLog(errmsg, "ERROR");
+                throw new IndexOutOfRangeException(errmsg);
+            }
+            return comments_map[func_name];
+        }
+
         public static void AutoFuncFormat()
         {
             // auto format a UDF from ExcelFunc
@@ -146,18 +177,38 @@ namespace qxlpy
             backtrack.Add(xlApp.Cells(y, x));
             ExManip.RangeEmpty(xlApp.Cells(y, x + 1), backtrack);
             xlApp.Cells(y, x).Value = f;
+            xlApp.Cells(y, x).Font.Bold = true;
+            xlApp.Cells(y, x).Font.Color = Color.FromArgb(0, 255, 255, 255);
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
+            string comment = GetComment(f);
+            xlApp.Cells(y, x).AddComment(comment);
             ExManip.GetRange(y, x, y, x +1).Merge();
+
+            // parsing the comment for a list of default values
+            StringReader reader = new StringReader(comment);
+            string ea_line = "";
+            var param_choices = new Dictionary<string, string> { };
+            while ((ea_line = reader.ReadLine()) != null) {
+                if (ea_line.Contains("::")) {
+                    string[] p_choice = ea_line.Split("::");
+                    if (p_choice.Length == 2) {
+                        string funcname = p_choice[0].Replace(" ", "");
+                        string f_params = p_choice[1].Replace(" ", "");
+                        param_choices.Add(funcname, f_params);
+                    }
+                }
+            }
 
             // Loop through params and formula
             string new_formula = "=" + f + "(";
             int ad_row_count = 1;  // count the rows of array and dict to the right of func name
-            string comma, param, def_value;
+            string comma, param, def_value = "", choices = "";
             comma = ", ";
             Type param_type;
             for (int i = 1; i < p_len; i++) {
                 param_type = param_info[i - 1].ParameterType;
                 param = param_info[i - 1].Name;
+                choices = param_choices.ContainsKey(param) ? param_choices[param] : "";
                 def_value = param_info[i - 1].HasDefaultValue ? param_info[i - 1].DefaultValue.ToString() : "";
                 if (param_type.Name.Contains("[]")) {
                     // array type
@@ -177,6 +228,7 @@ namespace qxlpy
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                     def_value = "";
+                    choices = "";
                 } else if (param_type.Name.Contains("[,]")) {
                     // dict type
                     // title cells
@@ -202,6 +254,7 @@ namespace qxlpy
                     // grey out unused cell right to param name
                     xlApp.Cells(y + i, x + 1).Interior.Color = Color.FromArgb(0, 145, 145, 145);
                     def_value = "";
+                    choices = "";
                 } else {
                     // bool, str, int, double types
                     new_formula += xlApp.Cells(y + i, x + 1).Address + comma;
@@ -209,6 +262,16 @@ namespace qxlpy
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x), backtrack);
                 ExManip.RangeEmpty(xlApp.Cells(y + i, x + 1), backtrack);
                 xlApp.Cells(y + i, x).Value = param;
+                if (choices != "") {
+                    xlApp.Cells(y + i, x + 1).Validation.Delete();
+                    xlApp.Cells(y + i, x + 1).Validation.Add(
+                        Excel.XlDVType.xlValidateList,
+                        Excel.XlDVAlertStyle.xlValidAlertInformation,
+                        Excel.XlFormatConditionOperator.xlBetween,
+                        choices, Type.Missing
+                    );
+                    xlApp.Cells(y + i, x + 1).Validation.InCellDropdown = true;
+                }
                 if (def_value != "") {
                     xlApp.Cells(y + i, x + 1).Value = def_value;
                 }
@@ -519,6 +582,11 @@ MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTION_NAME_")]'
 MAIN_F = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
 MAIN_RET_PYE = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
 MAIN_RETURN_S = '            return _RET_;'
+MAIN_DOCSTRING = '''                {
+                    "_FUNCTION_NAME_",
+@"_DOCSTRING_"
+                },
+'''
 MAIN_LIST = r'''
             int len = ret.Length;
             if (len == 0) { return "N/A"; }
