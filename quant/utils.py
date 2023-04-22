@@ -2,6 +2,7 @@
 Qxlpy Utilities
 """
 from typing import List, Dict
+from datetime import datetime
 import pandas as pd
 import plotly.express as px
 
@@ -35,7 +36,7 @@ def qxlpyPlotDataFrame(
     )-> str:
     """
     Plot cached Pandas DataFrame obj
-    startdate has to be in string, such as: '2022/12/01'
+    plot_type:: line, bar, scatter
     """
     plot_obj = {
         "line": px.line,
@@ -52,12 +53,13 @@ def qxlpyPlotDataFrame(
     return 'SUCCESS'
 
 def qxlpyCreatePlotDataFrame(
-        cached_arrays: List[str], labels: List[str], startdate: str
+        cached_arrays: List[str], labels: List[str], startdate: int = 20221201
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame
-    startdate must be in string format that looks like 2022/12/01
     """
+    s_date = datetime.strptime(str(startdate), "%Y%m%d")
+    startdate = s_date.strftime("%Y/%m/%d")
     cached_objs = global_obj.list_objs()
     plot_obj = {}
     periods = None

@@ -162,8 +162,24 @@ _COMMENTS_MAP_
             xlApp.Cells(y, x).Font.Bold = true;
             xlApp.Cells(y, x).Font.Color = Color.FromArgb(0, 255, 255, 255);
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
-            xlApp.Cells(y, x).AddComment(GetComment(f));
+            string comment = GetComment(f);
+            xlApp.Cells(y, x).AddComment(comment);
             ExManip.GetRange(y, x, y, x +1).Merge();
+
+            // parsing the comment for a list of default values
+            StringReader reader = new StringReader(comment);
+            string ea_line = "";
+            var param_choices = new Dictionary<string, string[]> { };
+            while ((ea_line = reader.ReadLine()) != null) {
+                if (ea_line.Contains("::")) {
+                    string[] p_choice = ea_line.Split("::");
+                    if (p_choice.Length == 2) {
+                        string funcname = p_choice[0].Replace(" ", "");
+                        string[] f_params = p_choice[1].Replace(" ", "").Split(",");
+                        param_choices.Add(funcname, f_params);
+                    }
+                }
+            }
 
             // Loop through params and formula
             string new_formula = "=" + f + "(";

@@ -10,6 +10,6 @@ def test_plot_data():
     dframe = utils.qxlpyCreatePlotDataFrame(
         [tdbank, bmo, boa],
         ['td', 'bmo', 'boa'],
-        '2022/12/01'
+        20221201
     )
     utils.qxlpyPlotDataFrame(dframe, "line", "dummy", True)
