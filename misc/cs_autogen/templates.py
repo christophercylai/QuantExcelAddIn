@@ -117,7 +117,7 @@ namespace qxlpy
             return match_f.Value;
         }
 
-        private static string GetComments(string func_name)
+        private static string GetComment(string func_name)
         {
             var comments_map = new Dictionary<string, string>() {
 _COMMENTS_MAP_
@@ -159,7 +159,10 @@ _COMMENTS_MAP_
             backtrack.Add(xlApp.Cells(y, x));
             ExManip.RangeEmpty(xlApp.Cells(y, x + 1), backtrack);
             xlApp.Cells(y, x).Value = f;
+            xlApp.Cells(y, x).Font.Bold = true;
+            xlApp.Cells(y, x).Font.Color = Color.FromArgb(0, 255, 255, 255);
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
+            xlApp.Cells(y, x).AddComment(GetComment(f));
             ExManip.GetRange(y, x, y, x +1).Merge();
 
             // Loop through params and formula
