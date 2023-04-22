@@ -38,8 +38,8 @@ def qxlpyPlotDataFrame(
     return 'SUCCESS'
 
 def qxlpyCreatePlotDataFrame(
-        cached_arrays: List[str], df_prefix: str = "None",
-        labels: List[str], startdate: int = 20221201,
+        cached_arrays: List[str], labels: List[str],
+        startdate: int = 20221201, df_prefix: str = "None",
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame
@@ -75,4 +75,4 @@ def qxlpyCreatePlotDataFrame(
         plot_obj,
         index = pd.date_range(start=startdate, freq="M", periods=periods)
     )
-    return global_obj.store_obj(df)
+    return global_obj.store_obj(df, df_prefix)

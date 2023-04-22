@@ -20,13 +20,21 @@ namespace qxlpy
       <ribbon>
         <tabs>
           <tab id='qxltab' label='QXLPY'>
-            <group id='qxlpy' label='QXLPY'>
+            <group id='qxlpy_e' label='Function Expansion'>
               <button id='expandfunc' label='Expand Function'
                 onAction='expandFuncButton' size='large' screentip='Expand Function (Ctrl-INS)'
                 imageMso='ConditionalFormattingColorScalesGallery' />
+            </group >
+            <group id='qxlpy_d' label='Function Deletion'>
               <button id='removefunc' label='Remove Function'
-                onAction='removeFuncButton' size='large' screentip='Remove Function (Ctrl-Shift-DEL)'
+                onAction='removeFuncButton' size='large' screentip='Remove Function (Shift-DEL)'
+                imageMso='RecordsDeleteRecord' />
+              <button id='removedata' label='Remove Data'
+                onAction='removeDataButton' size='large' screentip='Remove Data (Ctrl-DEL)'
                 imageMso='TableDelete' />
+              <button id='removeall' label='Remove Function and Data'
+                onAction='removeAllButton' size='large' screentip='Remove Function and Data (Ctrl-Shift-DEL)'
+                imageMso='QueryDelete' />
             </group >
           </tab>
         </tabs>
@@ -45,6 +53,16 @@ namespace qxlpy
         }
 
         public void removeFuncButton(IRibbonControl control)
+        {
+            AutoFill.AutoFuncClear();
+        }
+
+        public void removeDataButton(IRibbonControl control)
+        {
+            AutoFill.AutoDataClear();
+        }
+
+        public void removeAllButton(IRibbonControl control)
         {
             AutoFill.AutoDataClear();
             AutoFill.AutoFuncClear();

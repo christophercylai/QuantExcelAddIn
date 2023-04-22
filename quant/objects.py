@@ -14,7 +14,6 @@ def qxlpyStoreStrDict(objdict: Dict[str, str], prefix: str = "None") -> str:
     """
     # returns the address of the Calculate py obj
     # <key: str, value: str>
-    prefix = prefix if prefix != "None" else ""
     return global_obj.store_obj(objdict, prefix)
 
 def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
@@ -28,14 +27,12 @@ def qxlpyStoreStrList(objlist: List[str], prefix: str = "None") -> str:
     """
     store string list and return the id
     """
-    prefix = prefix if prefix != "None" else ""
     return global_obj.store_obj(objlist, prefix)
 
 def qxlpyStoreDoubleList(objlist: List[float], prefix: str = "None") -> str:
     """
     store float list and return the id
     """
-    prefix = prefix if prefix != "None" else ""
     return global_obj.store_obj(objlist, prefix)
 
 def qxlpyListGlobalObjects() -> List[str]:
