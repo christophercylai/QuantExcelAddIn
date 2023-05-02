@@ -9,13 +9,13 @@ from . import global_obj
 # pylint: disable=invalid-name
 
 
-def qxlpyGetCalculate(dub_list: List[float]) -> str:
+def qxlpyGetCalculate(dub_list: List[float], prefix: str) -> str:
     """
     return a string pointing to a calc object
     """
     # returns the address of the Calculate py obj
     calobj = calc.Calc(dub_list)
-    return global_obj.store_obj(calobj)
+    return global_obj.store_obj(calobj, prefix)
 
 def qxlpyCalculateAddNum(addr: str) -> float:
     """

@@ -42,7 +42,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
     # Reference:
     # https://learn.microsoft.com/en-us/dotnet/api/system.convert?redirectedfrom=MSDN&view=net-6.0
     to_type_map = {
-        bool: 'ToBool',
+        bool: 'ToBoolean',
         str: 'ToString',
         int: 'ToInt64',
         float: 'ToDouble'
@@ -73,7 +73,6 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             main_f = templates.MAIN_F
             main_return_s = templates.MAIN_RETURN_S
             main_excel = templates.MAIN_EXCEL
-            main_ld = ''
 
             python_func = templates.PYTHON_FUNC
             python_call = templates.PYTHON_CALL
@@ -142,27 +141,32 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             elif 'List' == ret_type._name:
                 # list and dict return string 'SUCCESS' to the func cell
                 # results are printed below the function
-                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
-                type_checks += f'            CheckEmpty(func_pos);\n'
-                main_return_s = re.sub('_RET_', '"SUCCESS"', main_return_s)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[list], main_ret_pye)
-                main_ld = templates.MAIN_LIST
+                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
+                type_checks += f'            CheckEmpty(func_pos, true);\n'
+                main_return_s = re.sub('_RET_', 'ret', main_return_s)
+                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
 
-                list_type = type_map[ret_type.__args__[0]]
+                list_type = ""
+                if ret_type.__args__[0] in to_type_map:
+                    list_type = ret_type.__args__[0]
+                    python_dl_return = templates.PYTHON_LIST_RETURN
+                elif 'List' == ret_type.__args__[0]._name:
+                    list_type = ret_type.__args__[0].__args__[0]
+                    python_dl_return = templates.PYTHON_NESTED_LIST_RETURN
+                else:
+                    raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
                 python_dl_return = templates.PYTHON_LIST_RETURN
-                python_dl_return = re.sub('_LIST_TYPE_', type_map[ret_type.__args__[0]], python_dl_return)
-                python_dl_return = re.sub('_TO_TYPE_', to_type_map[ret_type.__args__[0]], python_dl_return)
+                python_dl_return = re.sub('_TO_TYPE_', to_type_map[list_type], python_dl_return)
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
-                python_func  = re.sub('_FUNC_TYPE_', 'object[]', python_func)
+                python_func  = re.sub('_FUNC_TYPE_', type_map[dict], python_func)
                 python_call  = ''
             elif 'Dict' == ret_type._name:
-                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'string', main_f)
-                type_checks += f'            CheckEmpty(func_pos);\n'
-                main_return_s = re.sub('_RET_', '"SUCCESS"', main_return_s)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', 'List<List<object>>', main_ret_pye)
-                main_ld = templates.MAIN_DICT
+                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
+                type_checks += f'            CheckEmpty(func_pos, true);\n'
+                main_return_s = re.sub('_RET_', 'ret', main_return_s)
+                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
 
-                python_func  = re.sub('_FUNC_TYPE_', 'List<List<object>>', python_func)
+                python_func  = re.sub('_FUNC_TYPE_', type_map[dict], python_func)
                 python_call  = ''
                 python_dl_return = templates.PYTHON_DICT_RETURN
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
@@ -182,12 +186,12 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 python_dl_input = ''
                 if p_type in type_map:
                     main_params += f'{type_map[p_type]} '
-                    type_checks += f'            CheckEmpty({ea_arg});\n'
+                    type_checks += f'            {ea_arg} = Convert.{to_type_map[p_type]}(CheckEmpty({ea_arg}));\n'
 
                     py_params += ea_arg
                 elif 'List' in str(p_type):
                     main_params += f'{type_map[list]} '
-                    type_checks += f'            ListCheckEmpty({ea_arg});\n'
+                    type_checks += f'            {ea_arg} = ListCheckEmpty({ea_arg});\n'
 
                     python_dl_input = templates.PYTHON_LIST_INPUT
                     python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
@@ -197,7 +201,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     py_params += f'pylist_{ea_arg}'
                 elif 'Dict' in str(p_type):
                     main_params += f'{type_map[dict]} '
-                    type_checks += f'            DictCheckEmpty({ea_arg});\n'
+                    type_checks += f'            {ea_arg} = DictCheckEmpty({ea_arg});\n'
 
                     python_dl_input = templates.PYTHON_DICT_INPUT
                     python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
@@ -230,7 +234,6 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 type_checks,
                 '            PyExecutor pye = new();\n',
                 f'{main_ret_pye}\n',
-                main_ld,
                 f'{main_return_s}\n',
                 '        }\n\n'
             ]

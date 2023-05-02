@@ -13,7 +13,7 @@ def test_objects():
     assert dic.startswith(prefix)
 
     strlist = ["a", "b"]
-    lst = O.qxlpyStoreStrList(strlist)
+    lst = O.qxlpyStoreStrList(strlist, "test_obj_list")
 
     assert dic in O.qxlpyListGlobalObjects()
     assert lst in O.qxlpyListGlobalObjects()
