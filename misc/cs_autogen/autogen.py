@@ -1,3 +1,7 @@
+"""
+Auto generate Qxlpy C# code for the Excel Addin
+Files generated: main.cs, python.cs
+"""
 import os
 import site
 from pathlib import Path
@@ -24,6 +28,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
         funcs = inspect.getmembers(mod, inspect.isfunction)
         qxlpy_f = []
         for ea_f in funcs:
+            # only func that start with qxlpy will be processed
             if ea_f[0].startswith('qxlpy'):
                 qxlpy_f.append(ea_f)  # ea_f is a tuple = (func_name, func_obj)
         if qxlpy_f:
@@ -42,24 +47,27 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
     # Reference:
     # https://learn.microsoft.com/en-us/dotnet/api/system.convert?redirectedfrom=MSDN&view=net-6.0
     to_type_map = {
-        bool: 'ToBoolean',
-        str: 'ToString',
-        int: 'ToInt64',
-        float: 'ToDouble'
+        bool: 'Convert.ToBoolean',
+        str: 'Convert.ToString',
+        int: 'Convert.ToInt64',
+        float: 'Convert.ToDouble',
+        object: 'GetToTypeByValue'
     }
 
     # Reference
     # https://pythonnet.github.io/pythonnet/reference.html
     py_type_map = {
-        str: 'PyString',
-        int: 'PyInt',
-        float: 'PyFloat'
+        str: 'new PyString',
+        int: 'new PyInt',
+        float: 'new PyFloat',
+        object: 'GetPyTypeByValue'
     }
 
     # autogen scripts variables
     main_cs = ''
     main_docstring_func = ''
     python_cs = ''
+    python_module_list = []
 
     funcs_list = []
     # key is file name and value is list of function names
@@ -86,6 +94,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             main_excel = re.sub('_FUNCTION_NAME_', func[0], main_excel)
             python_func  = re.sub('_FUNCTION_NAME_', func[0], python_func)
             python_call = re.sub('_FUNCTION_NAME_', func[0], python_call)
+            python_call = re.sub('_PYTHONIMPORT_', key.upper(), python_call)
 
             # docstring
             docstring = inspect.getdoc(func[1])
@@ -142,10 +151,8 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 # list and dict return string 'SUCCESS' to the func cell
                 # results are printed below the function
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
-                type_checks += f'            CheckEmpty(func_pos, true);\n'
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
                 main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
-
                 list_type = ""
                 if ret_type.__args__[0] in to_type_map:
                     list_type = ret_type.__args__[0]
@@ -155,14 +162,13 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     python_dl_return = templates.PYTHON_NESTED_LIST_RETURN
                 else:
                     raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
-                python_dl_return = templates.PYTHON_LIST_RETURN
-                python_dl_return = re.sub('_TO_TYPE_', to_type_map[list_type], python_dl_return)
+                python_dl_return = re.sub('_TO_TYPE_', to_type_map[list_type].replace('Convert.', ''), python_dl_return)
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
+                python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
                 python_func  = re.sub('_FUNC_TYPE_', type_map[dict], python_func)
                 python_call  = ''
             elif 'Dict' == ret_type._name:
                 main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
-                type_checks += f'            CheckEmpty(func_pos, true);\n'
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
                 main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
 
@@ -170,9 +176,10 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 python_call  = ''
                 python_dl_return = templates.PYTHON_DICT_RETURN
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
-                python_dl_return = re.sub('_TO_KEY_TYPE_', to_type_map[ret_type.__args__[0]], python_dl_return)
-                python_dl_return = re.sub('_TO_VAL_TYPE_', to_type_map[ret_type.__args__[1]], python_dl_return)
+                python_dl_return = re.sub('_TO_KEY_TYPE_', to_type_map[ret_type.__args__[0]].replace('Convert.', ''), python_dl_return)
+                python_dl_return = re.sub('_TO_VAL_TYPE_', to_type_map[ret_type.__args__[1]].replace('Convert.', ''), python_dl_return)
                 python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
+                python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
             else:
                 raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
 
@@ -186,7 +193,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 python_dl_input = ''
                 if p_type in type_map:
                     main_params += f'{type_map[p_type]} '
-                    type_checks += f'            {ea_arg} = Convert.{to_type_map[p_type]}(CheckEmpty({ea_arg}));\n'
+                    type_checks += f'            {ea_arg} = {to_type_map[p_type]}(CheckEmpty({ea_arg}));\n'
 
                     py_params += ea_arg
                 elif 'List' in str(p_type):
@@ -225,14 +232,12 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 py_params += ', '
                 python_dl_inputs += python_dl_input
 
-            main_params += 'string func_pos = ""'
-            main_f = re.sub('_PARAMETERS_', main_params, main_f)
+            main_f = re.sub('_PARAMETERS_', main_params[:-2], main_f)
             main_array = [
                 f'{main_excel}\n',
                 f'{main_f}\n',
                 '        {\n',
                 type_checks,
-                '            PyExecutor pye = new();\n',
                 f'{main_ret_pye}\n',
                 f'{main_return_s}\n',
                 '        }\n\n'
@@ -241,26 +246,31 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 main_cs += ea_line
 
             # python_cs
-            python_func = re.sub('_PARAMETERS_', main_params.replace('string func_pos = ""', '')[:-2], python_func)
+            python_func = re.sub('_PARAMETERS_', main_params[:-2], python_func)
             python_call = re.sub('_ARGS_', py_params[:-2], python_call)
             python_dl_return = re.sub('_PY_PARAMS_', py_params[:-2], python_dl_return)
-            python_ipt = templates.PYTHON_IPT
-            python_ipt = re.sub('_MODULE_NAME_', key, python_ipt)
+            if key.upper() not in python_module_list:
+                python_module_list.append(key.upper());
 
-            python_array = [
-                f'{python_ipt}\n',
-                f'{python_call}',
-            ]
             python_f_body = ''
-            for ea_line in python_array:
-                python_f_body += ea_line
+            python_f_body += python_call;
             python_gil = templates.PYTHON_GIL
             python_gil = re.sub('_DL_INPUTS_', python_dl_inputs, python_gil)
             python_gil = re.sub('_BODY_', python_f_body, python_gil)
             python_gil = re.sub('_DL_RETURN_', python_dl_return, python_gil)
             python_cs += python_func
             python_cs += f'{python_gil}\n'
-            python_body =re.sub('_BODY_', python_cs, templates.PYTHON_BODY)
+            python_mods = ''
+            python_import_list = ''
+            for ea_module in python_module_list:
+                python_mods += f"{ea_module}, "
+                python_import_list += f'                {ea_module} = SCOPE.Import("quant.{ea_module.lower()}");\n'
+            python_mods = python_mods[:-2]
+            python_import_list = python_import_list[:-1]
+            python_body = templates.PYTHON_BODY
+            python_body = re.sub('_PYTHONMODS_', python_mods, python_body)
+            python_body = re.sub('_PYIMPORTLIST_', python_import_list, python_body)
+            python_body = re.sub('_BODY_', python_cs, python_body)
 
     if gen_main:
         main_body = re.sub('_BODY_', main_cs, templates.MAIN_BODY)
