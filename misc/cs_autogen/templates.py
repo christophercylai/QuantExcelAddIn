@@ -455,7 +455,7 @@ _COMMENTS_MAP_
             });
         }
 
-        private static object CheckEmpty(object obj, bool assert = false)
+        private static object CheckEmpty(object obj, object? defval = null, bool assert = false)
         {
             string o = obj.ToString();
             if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty" || o == "ExcelDna.Integration.ExcelMissing") {
@@ -464,7 +464,10 @@ _COMMENTS_MAP_
                     ExManip.WriteLog(warning_msg, "WARNING");
                     throw new ArgumentNullException(warning_msg);
                 }
-                return "";
+                if (defval == null) {
+                    return "";
+                }
+                return defval;
             }
             return obj;
         }
@@ -480,10 +483,11 @@ _COMMENTS_MAP_
 
         private static object[,] DictCheckEmpty(object[,] obj)
         {
-            int len = obj.Length / 2;
-            object[,] ret = new object[len, 2];
+            int nested_len = obj.GetLength(1);
+            int len = obj.GetLength(0);
+            object[,] ret = new object[len, nested_len];
             for (int i = 0; i < len; i++) {
-                for (int j = 0; j < 2; j++) {
+                for (int j = 0; j < nested_len; j++) {
                     ret[i, j] = CheckEmpty(obj[i, j]);
                 }
             }
@@ -510,12 +514,12 @@ _BODY_
 }
 
 '''
-MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTION_NAME_")]'
-MAIN_F = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
-MAIN_RET_PYE = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
+MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTIONNAME_")]'
+MAIN_F = '        public static _EXCELRETURNTYPE_ _FUNCTIONNAME_(_PARAMETERS_)'
+MAIN_RET_PYE = '            _PYRETURNTYPE_ ret = pye._FUNCTIONNAME_(_ARGS_);'
 MAIN_RETURN_S = '            return _RET_;'
 MAIN_DOCSTRING = '''                {
-                    "_FUNCTION_NAME_",
+                    "_FUNCTIONNAME_",
 @"_DOCSTRING_"
                 },
 '''
@@ -602,95 +606,111 @@ _BODY_
 PYTHON_GIL = r'''
         {
             using (Py.GIL())
-            {_DL_INPUTS_
+            {_DLINPUTS_
 _BODY_
-_DL_RETURN_
+_DLRETURN_
                 return ret;
             }
         }
 '''
-PYTHON_FUNC = '        public _FUNC_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
-PYTHON_CALL = '                _FUNC_TYPE_ ret = _PYTHONIMPORT_._FUNCTION_NAME_(_ARGS_);'
+PYTHON_FUNC = '        public _FUNCTYPE_ _FUNCTIONNAME_(_PARAMETERS_)'
+PYTHON_CALL = '                _FUNCTYPE_ ret = _PYTHONIMPORT_._FUNCTIONNAME_(_ARGS_);'
 PYTHON_LIST_RETURN = r'''
-                PyList pylist_ret = _PYTHONIMPORT_._FUNC_NAME_(_PY_PARAMS_);
+                PyList pylist_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
                 long len = pylist_ret.Length();
                 var ret = new object[len, 1];
                 int row = 0;
                 foreach (PyObject pyobj in pylist_ret) {
-                    ret[row, 0] = pyobj._TO_TYPE_();
+                    ret[row, 0] = pyobj._TOTYPE_();
                     row += 1;
                 }
 '''
 PYTHON_DICT_RETURN = r'''
-                PyDict pydict_ret = _PYTHONIMPORT_._FUNC_NAME_(_PY_PARAMS_);
+                PyDict pydict_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
                 var ret = new object[pydict_ret.Length(), 2];
                 int row = 0;
                 foreach (PyObject key in pydict_ret) {
-                    ret[row, 0] = key._TO_KEY_TYPE_();
-                    ret[row, 1] = pydict_ret.GetItem(key)._TO_VAL_TYPE_();
+                    ret[row, 0] = key._TOKEYTYPE_();
+                    ret[row, 1] = pydict_ret.GetItem(key)._TOVALTYPE_();
                     row += 1;
                 }
 '''
 PYTHON_NESTED_LIST_RETURN = r'''
-                PyList pylist_ret = _PYTHONIMPORT_._FUNC_NAME_(_PY_PARAMS_);
-                long row_len = 0;
-                long col_len = pylist_ret.Length();
+                PyList pylist_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
+                long row_len = pylist_ret.Length();
+                long col_len = 0;
                 foreach (PyObject pyobj in pylist_ret) {
-                    row_len = pyobj.Length();
+                    col_len = pyobj.Length();
                     break;
                 }
                 var ret = new object[row_len, col_len];
 
-                int col = 0;
+                int row = 0;
                 foreach (PyObject pyobj in pylist_ret) {
                     PyList pylist = PyList.AsList(pyobj);
-                    int row = 0;
-                    foreach (PyObject internal_pyobj in pylist {
+                    int col = 0;
+                    foreach (PyObject internal_pyobj in pylist) {
                         ret[row, col] = internal_pyobj.ToString();
-                        row += 1;
+                        col += 1;
                     }
-                    col += 1;
+                    row += 1;
                 }
 '''
 PYTHON_LIST_INPUT = r'''
-                var pylist__ARG_NAME_ = new PyList();
-                foreach (object n in _ARG_NAME_) {
+                var pylist__ARGNAME_ = new PyList();
+                foreach (object n in _ARGNAME_) {
                     object ea_obj = n;
-                    _ARG_TYPE_ obj__ARG_NAME_;
+                    _ARGTYPE_ obj__ARGNAME_;
                     try {
-                        if (Convert.ToString(n) == "") {
-                            continue;
-                        }
-                        obj__ARG_NAME_ = _TO_TYPE_(ea_obj);
+                        obj__ARGNAME_ = _TOTYPE_(ea_obj);
                     } catch (Exception e) {
-                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARG_TYPE_'";
+                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARGTYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pylist__ARG_NAME_.Append(_PY_TYPE_(obj__ARG_NAME_));
+                    pylist__ARGNAME_.Append(_PYTYPE_(obj__ARGNAME_));
                 }
 '''
 PYTHON_DICT_INPUT = r'''
-                var pydict__ARG_NAME_ = new PyDict();
-                for (int i = 0; i < _ARG_NAME_.GetLength(0); i++) {
-                    _KEY_TYPE_ k__ARG_NAME_;
-                    _VAL_TYPE_ v__ARG_NAME_;
+                var pydict__ARGNAME_ = new PyDict();
+                for (int i = 0; i < _ARGNAME_.GetLength(0); i++) {
+                    _KEYTYPE_ k__ARGNAME_;
+                    _VALTYPE_ v__ARGNAME_;
                     try {
-                        object objkey = _ARG_NAME_[i, 0];
-                        object objval = _ARG_NAME_[i, 1];
-                        if (Convert.ToString(objval) == "") {
+                        object objkey = _ARGNAME_[i, 0];
+                        object objval = _ARGNAME_[i, 1];
+                        if (Convert.ToString(objkey) == "") {
                             continue;
                         }
-                        k__ARG_NAME_ = _TO_KEYTYPE_(objkey);
-                        v__ARG_NAME_ = _TO_VALTYPE_(objval);
+                        k__ARGNAME_ = _TOKEYTYPE_(objkey);
+                        v__ARGNAME_ = _TOVALTYPE_(objval);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in dictionary: ";
-                        error_msg += "'{Convert.ToString(objkey)}' should be '_KEY_TYPE_' and ";
-                        error_msg += "'{Convert.ToString(objval)}' should be '_VAL_TYPE_'";
+                        error_msg += "'{Convert.ToString(objkey)}' should be '_KEYTYPE_' and ";
+                        error_msg += "'{Convert.ToString(objval)}' should be '_VALTYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pydict__ARG_NAME_[k__ARG_NAME_] = _PY_TYPE_VAL_(v__ARG_NAME_);
+                    pydict__ARGNAME_[k__ARGNAME_] = _PYTYPEVAL_(v__ARGNAME_);
+                }
+'''
+PYTHON_NESTED_LIST_INPUT = r'''
+                var pylist__ARGNAME_ = new PyList();
+                for (int i = 0; i < _ARGNAME_.GetLength(0); i++) {
+                    var internal__ARGNAME_ = new PyList();
+                    for (int j = 0; j < _ARGNAME_.GetLength(1); j++) {
+                        object ea_obj = _ARGNAME_[i, j];
+                        _ARGTYPE_ obj__ARGNAME_;
+                        try {
+                            obj__ARGNAME_ = _TOTYPE_(ea_obj);
+                        } catch (Exception e) {
+                            string error_msg = $"Wrong type in array: '{Convert.ToString(ea_obj)}' is not of type 'string'";
+                            qxlpyLogMessage(error_msg, "ERROR");
+                            throw new ArrayTypeMismatchException(error_msg);
+                        }
+                        internal__ARGNAME_.Append(_PYTYPE_(obj__ARGNAME_));
+                    }
+                    pylist__ARGNAME_.Append(internal__ARGNAME_);
                 }
 '''
 ### python.cs string templates ENDS ###

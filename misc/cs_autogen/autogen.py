@@ -89,16 +89,16 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
             # function name
             # func[0] is the function name and func[1] are the parameters
-            main_f = re.sub('_FUNCTION_NAME_', func[0], main_f)
-            main_ret_pye = re.sub('_FUNCTION_NAME_', func[0], main_ret_pye)
-            main_excel = re.sub('_FUNCTION_NAME_', func[0], main_excel)
-            python_func  = re.sub('_FUNCTION_NAME_', func[0], python_func)
-            python_call = re.sub('_FUNCTION_NAME_', func[0], python_call)
+            main_f = re.sub('_FUNCTIONNAME_', func[0], main_f)
+            main_ret_pye = re.sub('_FUNCTIONNAME_', func[0], main_ret_pye)
+            main_excel = re.sub('_FUNCTIONNAME_', func[0], main_excel)
+            python_func  = re.sub('_FUNCTIONNAME_', func[0], python_func)
+            python_call = re.sub('_FUNCTIONNAME_', func[0], python_call)
             python_call = re.sub('_PYTHONIMPORT_', key.upper(), python_call)
 
             # docstring
             docstring = inspect.getdoc(func[1])
-            main_docstring = re.sub("_FUNCTION_NAME_", func[0], templates.MAIN_DOCSTRING)
+            main_docstring = re.sub("_FUNCTIONNAME_", func[0], templates.MAIN_DOCSTRING)
             main_docstring = re.sub("_DOCSTRING_", docstring, main_docstring)
             main_docstring_func += main_docstring
 
@@ -130,7 +130,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             main_args_str = ''
             args.reverse()
             for arg in args:
-                main_args_str += f'{arg}, '
+                main_args_str += f'_{arg}, '
                 if not arg in arg_default:
                     arg_default[arg] = None
             main_ret_pye = re.sub('_ARGS_', main_args_str[:-2], main_ret_pye)
@@ -141,18 +141,18 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             assert 'return' in annotations, f"'{func[1].__name__}' has no return type"
             ret_type = annotations['return']
             if ret_type in type_map:
-                main_f = re.sub('_EXCEL_RETURN_TYPE_', type_map[ret_type], main_f)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[ret_type], main_ret_pye)
+                main_f = re.sub('_EXCELRETURNTYPE_', type_map[ret_type], main_f)
+                main_ret_pye = re.sub('_PYRETURNTYPE_', type_map[ret_type], main_ret_pye)
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
 
-                python_func  = re.sub('_FUNC_TYPE_', type_map[ret_type], python_func)
-                python_call  = re.sub('_FUNC_TYPE_', type_map[ret_type], python_call)
+                python_func  = re.sub('_FUNCTYPE_', type_map[ret_type], python_func)
+                python_call  = re.sub('_FUNCTYPE_', type_map[ret_type], python_call)
             elif 'List' == ret_type._name:
                 # list and dict return string 'SUCCESS' to the func cell
                 # results are printed below the function
-                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
+                main_f = re.sub('_EXCELRETURNTYPE_', 'object', main_f)
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
+                main_ret_pye = re.sub('_PYRETURNTYPE_', type_map[dict], main_ret_pye)
                 list_type = ""
                 if ret_type.__args__[0] in to_type_map:
                     list_type = ret_type.__args__[0]
@@ -162,74 +162,97 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     python_dl_return = templates.PYTHON_NESTED_LIST_RETURN
                 else:
                     raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
-                python_dl_return = re.sub('_TO_TYPE_', to_type_map[list_type].replace('Convert.', ''), python_dl_return)
-                python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
+                python_dl_return = re.sub('_TOTYPE_', to_type_map[list_type].replace('Convert.', ''), python_dl_return)
+                python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
-                python_func  = re.sub('_FUNC_TYPE_', type_map[dict], python_func)
+                python_func  = re.sub('_FUNCTYPE_', type_map[dict], python_func)
                 python_call  = ''
             elif 'Dict' == ret_type._name:
-                main_f = re.sub('_EXCEL_RETURN_TYPE_', 'object', main_f)
+                main_f = re.sub('_EXCELRETURNTYPE_', 'object', main_f)
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
-                main_ret_pye = re.sub('_PY_RETURN_TYPE_', type_map[dict], main_ret_pye)
+                main_ret_pye = re.sub('_PYRETURNTYPE_', type_map[dict], main_ret_pye)
 
-                python_func  = re.sub('_FUNC_TYPE_', type_map[dict], python_func)
+                python_func  = re.sub('_FUNCTYPE_', type_map[dict], python_func)
                 python_call  = ''
                 python_dl_return = templates.PYTHON_DICT_RETURN
-                python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
-                python_dl_return = re.sub('_TO_KEY_TYPE_', to_type_map[ret_type.__args__[0]].replace('Convert.', ''), python_dl_return)
-                python_dl_return = re.sub('_TO_VAL_TYPE_', to_type_map[ret_type.__args__[1]].replace('Convert.', ''), python_dl_return)
-                python_dl_return = re.sub('_FUNC_NAME_', func[0], python_dl_return)
+                python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
+                python_dl_return = re.sub('_TOKEYTYPE_', to_type_map[ret_type.__args__[0]].replace('Convert.', ''), python_dl_return)
+                python_dl_return = re.sub('_TOVALTYPE_', to_type_map[ret_type.__args__[1]].replace('Convert.', ''), python_dl_return)
+                python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
             else:
                 raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
 
             # parameters
             main_params = ''
-            py_params = ''
+            python_params = ''
+            pycall_params = ''
             for ea_arg in args:
                 # params
                 assert ea_arg in annotations, f"'{func[1].__name__}': param '{ea_arg}' has no type"
                 p_type = annotations[ea_arg]
                 python_dl_input = ''
                 if p_type in type_map:
-                    main_params += f'{type_map[p_type]} '
-                    type_checks += f'            {ea_arg} = {to_type_map[p_type]}(CheckEmpty({ea_arg}));\n'
+                    main_params += f'string '
+                    python_params += f'{type_map[p_type]} '
+                    default_value =  ", null, true"  # by default, call CheckEmpty with assert = true, unless there is a default value
+                    if arg_default[ea_arg] is not None:
+                        if p_type == bool:
+                            default_value = f', "{str(arg_default[ea_arg]).lower()}"'
+                        else:
+                            default_value = f', "{arg_default[ea_arg]}"'
+                    type_checks += f'            {type_map[p_type]} _{ea_arg} = {to_type_map[p_type]}(CheckEmpty({ea_arg}{default_value}));\n'
 
-                    py_params += ea_arg
-                elif 'List' in str(p_type):
-                    main_params += f'{type_map[list]} '
-                    type_checks += f'            {ea_arg} = ListCheckEmpty({ea_arg});\n'
+                    pycall_params += ea_arg
+                elif str(p_type).startswith('typing.List'):
+                    if p_type.__args__[0] in type_map:
+                        main_params += f'{type_map[list]} '
+                        python_params += f'{type_map[list]} '
+                        type_checks += f'            {type_map[list]} _{ea_arg} = ListCheckEmpty({ea_arg});\n'
 
-                    python_dl_input = templates.PYTHON_LIST_INPUT
-                    python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
-                    python_dl_input = re.sub('_ARG_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_TO_TYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_PY_TYPE_', py_type_map[p_type.__args__[0]], python_dl_input)
-                    py_params += f'pylist_{ea_arg}'
-                elif 'Dict' in str(p_type):
+                        python_dl_input = templates.PYTHON_LIST_INPUT
+                        python_dl_input = re.sub('_ARGNAME_', ea_arg, python_dl_input)
+                        python_dl_input = re.sub('_ARGTYPE_', type_map[p_type.__args__[0]], python_dl_input)
+                        python_dl_input = re.sub('_TOTYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
+                        python_dl_input = re.sub('_PYTYPE_', py_type_map[p_type.__args__[0]], python_dl_input)
+                        pycall_params += f'pylist_{ea_arg}'
+                    elif str(p_type.__args__[0]).startswith('typing.List'):
+                        main_params += f'{type_map[dict]} '
+                        python_params += f'{type_map[dict]} '
+                        type_checks += f'            {type_map[dict]} _{ea_arg} = DictCheckEmpty({ea_arg});\n'
+
+                        python_dl_input = templates.PYTHON_NESTED_LIST_INPUT
+                        python_dl_input = re.sub('_ARGNAME_', ea_arg, python_dl_input)
+                        python_dl_input = re.sub('_ARGTYPE_', type_map[p_type.__args__[0].__args__[0]], python_dl_input)
+                        python_dl_input = re.sub('_TOTYPE_', to_type_map[p_type.__args__[0].__args__[0]], python_dl_input)
+                        python_dl_input = re.sub('_PYTYPE_', py_type_map[p_type.__args__[0].__args__[0]], python_dl_input)
+                        pycall_params += f'pylist_{ea_arg}'
+                elif str(p_type).startswith('typing.Dict'):
                     main_params += f'{type_map[dict]} '
-                    type_checks += f'            {ea_arg} = DictCheckEmpty({ea_arg});\n'
+                    python_params += f'{type_map[dict]} '
+                    type_checks += f'            {type_map[dict]} _{ea_arg} = DictCheckEmpty({ea_arg});\n'
 
                     python_dl_input = templates.PYTHON_DICT_INPUT
-                    python_dl_input = re.sub('_ARG_NAME_', ea_arg, python_dl_input)
-                    python_dl_input = re.sub('_KEY_TYPE_', type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_VAL_TYPE_', type_map[p_type.__args__[1]], python_dl_input)
-                    python_dl_input = re.sub('_TO_KEYTYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
-                    python_dl_input = re.sub('_TO_VALTYPE_', to_type_map[p_type.__args__[1]], python_dl_input)
-                    python_dl_input = re.sub('_PY_TYPE_VAL_', py_type_map[p_type.__args__[1]], python_dl_input)
-                    py_params += f'pydict_{ea_arg}'
+                    python_dl_input = re.sub('_ARGNAME_', ea_arg, python_dl_input)
+                    python_dl_input = re.sub('_KEYTYPE_', type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_VALTYPE_', type_map[p_type.__args__[1]], python_dl_input)
+                    python_dl_input = re.sub('_TOKEYTYPE_', to_type_map[p_type.__args__[0]], python_dl_input)
+                    python_dl_input = re.sub('_TOVALTYPE_', to_type_map[p_type.__args__[1]], python_dl_input)
+                    python_dl_input = re.sub('_PYTYPEVAL_', py_type_map[p_type.__args__[1]], python_dl_input)
+                    pycall_params += f'pydict_{ea_arg}'
                 else:
                     raise KeyError(f'{key}.{func[0]}: {p_type} is not a valid type for C# autogen')
+
                 main_params += ea_arg
                 if arg_default[ea_arg] is not None:
-                    if p_type == str:
-                        main_params += f' = "{arg_default[ea_arg]}"'
-                    elif p_type == bool:
-                        main_params += f' = {arg_default[ea_arg]}'.lower()
+                    if p_type == bool:
+                        main_params += f' = "{str(arg_default[ea_arg]).lower()}"'
                     else:
-                        main_params += f' = {arg_default[ea_arg]}'
+                        main_params += f' = "{arg_default[ea_arg]}"'
+                python_params += ea_arg
                 main_params += ', '
-                py_params += ', '
+                python_params += ', '
+                pycall_params += ', '
                 python_dl_inputs += python_dl_input
 
             main_f = re.sub('_PARAMETERS_', main_params[:-2], main_f)
@@ -246,18 +269,18 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 main_cs += ea_line
 
             # python_cs
-            python_func = re.sub('_PARAMETERS_', main_params[:-2], python_func)
-            python_call = re.sub('_ARGS_', py_params[:-2], python_call)
-            python_dl_return = re.sub('_PY_PARAMS_', py_params[:-2], python_dl_return)
+            python_func = re.sub('_PARAMETERS_', python_params[:-2], python_func)
+            python_call = re.sub('_ARGS_', pycall_params[:-2], python_call)
+            python_dl_return = re.sub('_PYPARAMS_', pycall_params[:-2], python_dl_return)
             if key.upper() not in python_module_list:
                 python_module_list.append(key.upper());
 
             python_f_body = ''
             python_f_body += python_call;
             python_gil = templates.PYTHON_GIL
-            python_gil = re.sub('_DL_INPUTS_', python_dl_inputs, python_gil)
+            python_gil = re.sub('_DLINPUTS_', python_dl_inputs, python_gil)
             python_gil = re.sub('_BODY_', python_f_body, python_gil)
-            python_gil = re.sub('_DL_RETURN_', python_dl_return, python_gil)
+            python_gil = re.sub('_DLRETURN_', python_dl_return, python_gil)
             python_cs += python_func
             python_cs += f'{python_gil}\n'
             python_mods = ''

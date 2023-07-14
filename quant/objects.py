@@ -29,11 +29,29 @@ def qxlpyStoreStrList(objlist: List[str], prefix: str) -> str:
     """
     return global_obj.store_obj(objlist, prefix)
 
+def qxlpyGetStrList(obj_name: str) -> List[str]:
+    """
+    return a list of strings
+    """
+    return global_obj.get_obj(obj_name)
+
 def qxlpyStoreDoubleList(objlist: List[float], prefix: str) -> str:
     """
     store float list and return the id
     """
     return global_obj.store_obj(objlist, prefix)
+
+def qxlpyStoreStrTable(nested_objlist: List[List[str]], prefix: str) -> str:
+    """
+    store a table of strings, i.e. List[List[str]]
+    """
+    return global_obj.store_obj(nested_objlist, prefix)
+
+def qxlpyGetStrTable(obj_name: str) -> List[List[str]]:
+    """
+    return a table of strings
+    """
+    return global_obj.get_obj(obj_name)
 
 def qxlpyListGlobalObjects() -> List[str]:
     """
