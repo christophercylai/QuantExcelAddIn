@@ -39,7 +39,7 @@ def qxlpyPlotDataFrame(
 
 def qxlpyCreatePlotDataFrame(
         cached_arrays: List[str], labels: List[str],
-        startdate: int = 20221201, df_prefix: str = "None",
+        df_prefix: str, startdate: int = 20221201,
     )-> str:
     """
     Take a list of cached List[float] objs and create a DataFrame

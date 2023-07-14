@@ -9,6 +9,7 @@ from .global_log import cs_logger
 def qxlpyLogMessage(logmsg: str, level: str = "INFO") -> str:
     """
     Log message and return a message to Excel
+    level:: INFO, DEBUG, WARNING, ERROR, CRITICAL
     """
     loglevels = {
         "DEBUG": cs_logger.debug,

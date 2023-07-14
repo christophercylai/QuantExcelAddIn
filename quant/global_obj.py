@@ -7,13 +7,15 @@ from quant import py_logger
 GLOBAL_OBJS = {}
 
 
-def store_obj(obj, prefix: str = "") -> str:
+def store_obj(obj, prefix: str) -> str:
     """
     store an object and return it's id
     """
-    prefix = "" if prefix.upper() == "NONE" else prefix
-    prefix = prefix if not prefix else f"{prefix}_"
-    obj_name = prefix + str(obj.__class__).split("'")[1] + '_' + str(id(obj))
+    if not prefix:
+        errmsg = "Cannot store object, please supply a prefix"
+        py_logger.error(errmsg)
+        raise AssertionError(errmsg)
+    obj_name = prefix + "_" + str(obj.__class__).split("'")[1] + '_' + str(id(obj))
     GLOBAL_OBJS[obj_name] = obj
     return obj_name
 

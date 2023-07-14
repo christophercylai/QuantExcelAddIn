@@ -27,14 +27,8 @@ namespace qxlpy
             </group >
             <group id='qxlpy_d' label='Function Deletion'>
               <button id='removefunc' label='Remove Function'
-                onAction='removeFuncButton' size='large' screentip='Remove Function (Shift-DEL)'
+                onAction='removeFuncButton' size='large' screentip='Remove Function (Ctrl-DEL)'
                 imageMso='RecordsDeleteRecord' />
-              <button id='removedata' label='Remove Data'
-                onAction='removeDataButton' size='large' screentip='Remove Data (Ctrl-DEL)'
-                imageMso='TableDelete' />
-              <button id='removeall' label='Remove Function and Data'
-                onAction='removeAllButton' size='large' screentip='Remove Function and Data (Ctrl-Shift-DEL)'
-                imageMso='QueryDelete' />
             </group >
           </tab>
         </tabs>
@@ -54,17 +48,6 @@ namespace qxlpy
 
         public void removeFuncButton(IRibbonControl control)
         {
-            AutoFill.AutoFuncClear();
-        }
-
-        public void removeDataButton(IRibbonControl control)
-        {
-            AutoFill.AutoDataClear();
-        }
-
-        public void removeAllButton(IRibbonControl control)
-        {
-            AutoFill.AutoDataClear();
             AutoFill.AutoFuncClear();
         }
     }
@@ -168,7 +151,7 @@ _COMMENTS_MAP_
 
             MethodInfo method_info = typeof(ExcelFunc).GetMethod(f);
             ParameterInfo[] param_info = method_info.GetParameters();
-            int p_len = param_info.Length;
+            int p_len = param_info.Length + 1;
 
             // Cells formatting
             // Title = function name
@@ -182,6 +165,7 @@ _COMMENTS_MAP_
             xlApp.Cells(y, x).Interior.Color = Color.FromArgb(142, 0, 111, 41);
             string comment = GetComment(f);
             xlApp.Cells(y, x).AddComment(comment);
+            xlApp.Cells(y, x).Comment.Shape.TextFrame.Autosize = true;
             ExManip.GetRange(y, x, y, x +1).Merge();
 
             // parsing the comment for a list of default values
@@ -283,7 +267,9 @@ _COMMENTS_MAP_
             param_name_range.Interior.Color = Color.FromArgb(77, 241, 255, 205);
 
             dynamic nf_range = xlApp.Cells(y + p_len, x + 1);
-            new_formula += "CELL(\"address\", " + nf_range.Address.Replace("$", "") + "))";
+            var rgx_param = new Regex(@", $");
+            new_formula = rgx_param.Replace(new_formula, "");
+            new_formula += ")";
             ExManip.RangeEmpty(nf_range, backtrack);
 
             sheet.Columns(x).Autofit();
@@ -306,27 +292,7 @@ _COMMENTS_MAP_
             if (sheet.Columns(x + 1).ColumnWidth > 50) {
                 sheet.Columns(x + 1).ColumnWidth = 50;
             }
-            nf_range.Value = new_formula;
-        }
-
-        public static void AutoDataClear()
-        {
-            // auto clear data from ExcelFunc's UDF
-            if (!SheetExists()) {
-                return;
-            }
-
-            int[] ac = ExManip.GetActiveCellPos();
-            int y = ac[0];
-            int x = ac[1];
-
-            string f = FormulaExists(x, y);
-            if (f == "") {
-                return;
-            }
-
-            ExcelFunc.ClearData(x, y);
-            ExcelFunc.ClearData(x - 1, y);
+            nf_range.Formula2 = new_formula;
         }
 
         public static void AutoFuncClear()
@@ -349,7 +315,7 @@ _COMMENTS_MAP_
             ParameterInfo[] param_info = method_info.GetParameters();
 
             // clear single cell parameters
-            int p_size = param_info.Length - 1;
+            int p_size = param_info.Length;
             for (int i = 0; i < p_size + 2; i++) {
                 for (int j = 0; j < 2; j++) {
                     ExcelFunc.ClearCell(new ExcelReference(y - i - 1, x - 1 - j));
@@ -408,6 +374,8 @@ _COMMENTS_MAP_
 
     public static class ExManip
     {
+        static PyExecutor pye = new PyExecutor();
+
         public static void RangeEmpty(dynamic range, List<dynamic> bt)
         {
             // if cells in range is not empty, undo all the changes by the func formatter
@@ -429,9 +397,8 @@ _COMMENTS_MAP_
                 }
                 bt[0].Value = AutoFill.old_formula;
                 string errmsg = "Cannot overwrite non-empty cell(s): " + range.Address;
-                WriteLog(errmsg, "ERROR");
+                WriteLog(errmsg, "WARNING");
                 throw new ApplicationException(errmsg);
-
             }
             bt.Add(range);
         }
@@ -446,7 +413,6 @@ _COMMENTS_MAP_
         public static void WriteLog(string logmsg, string level)
         {
             // use python logging
-            PyExecutor pye = new();
             pye.qxlpyLogMessage(logmsg, level);
         }
 
@@ -489,57 +455,43 @@ _COMMENTS_MAP_
             });
         }
 
-        public static void ClearData(int x, int y) {
-            // clean up old data
-            dynamic xlApp = ExcelDnaUtil.Application;
-            bool data_formatted = true;
-            int cell_count = 0;
-            while (data_formatted) {
-                dynamic addr = xlApp.Cells(y + cell_count + 1, x);
-                if (addr.Font.Name == "Courier New" &&
-                    addr.Font.Size == 9 &&
-                    addr.Font.Italic)
-                {
-                    ClearCell(new ExcelReference(y + cell_count, x - 1));
-                } else {
-                    data_formatted = false;
-                }
-                cell_count += 1;
-            }
-        }
-
-        private static void CheckEmpty(object obj)
+        private static object CheckEmpty(object obj, object? defval = null, bool assert = false)
         {
             string o = obj.ToString();
             if (String.IsNullOrEmpty(o) || o == "ExcelDna.Integration.ExcelEmpty" || o == "ExcelDna.Integration.ExcelMissing") {
-                throw new ArgumentNullException("Missing Arguments");
+                if (assert) {
+                    string warning_msg = "Missing Argument";
+                    ExManip.WriteLog(warning_msg, "WARNING");
+                    throw new ArgumentNullException(warning_msg);
+                }
+                if (defval == null) {
+                    return "";
+                }
+                return defval;
             }
+            return obj;
         }
 
-        private static void ListCheckEmpty(object[] obj)
+        private static object[] ListCheckEmpty(object[] obj)
         {
+            var ret = new List<object>();
             foreach (object o in obj) {
-                CheckEmpty(o);
+                ret.Add(CheckEmpty(o));
             }
+            return ret.ToArray();
         }
 
-        private static void DictCheckEmpty(object[,] obj)
+        private static object[,] DictCheckEmpty(object[,] obj)
         {
-            foreach (object o in obj) {
-                CheckEmpty(o);
+            int nested_len = obj.GetLength(1);
+            int len = obj.GetLength(0);
+            object[,] ret = new object[len, nested_len];
+            for (int i = 0; i < len; i++) {
+                for (int j = 0; j < nested_len; j++) {
+                    ret[i, j] = CheckEmpty(obj[i, j]);
+                }
             }
-        }
-
-        private static void FillDataCell(ExcelReference ex_ref, object obj)
-        {
-            ExcelAsyncUtil.QueueAsMacro(() => {
-                // select ex_ref as active
-                XlCall.Excel(XlCall.xlcSelect, ex_ref);
-                XlCall.Excel(XlCall.xlcFormatFont, "Courier New", 9, false, true);
-                XlCall.Excel(XlCall.xlcPatterns, 1, 35, 1);
-                XlCall.Excel(XlCall.xlcBorder, 1);
-                ex_ref.SetValue(obj);
-            });
+            return ret;
         }
 
         [ExcelCommand(Name = "autoformat", ShortCut = "^{INSERT}")]
@@ -548,29 +500,13 @@ _COMMENTS_MAP_
             AutoFill.AutoFuncFormat();
         }
 
-        [ExcelCommand(Name = "dataclear", ShortCut = "^{DELETE}")]
-        public static void DataClear()
-        {
-            dynamic xlApp = ExcelDnaUtil.Application;
-            dynamic r = xlApp.ActiveCell;
-            AutoFill.AutoDataClear();
-            // re-focus on the formula cell
-            r.Activate();
-        }
-
-        [ExcelCommand(Name = "allclear", ShortCut = "^+{DELETE}")]
-        public static void AllClear()
-        {
-            AutoFill.AutoDataClear();
-            AutoFill.AutoFuncClear();
-        }
-
-        [ExcelCommand(Name = "funcclear", ShortCut = "+{DELETE}")]
+        [ExcelCommand(Name = "funcclear", ShortCut = "^{DELETE}")]
         public static void FuncClear()
         {
             AutoFill.AutoFuncClear();
         }
 
+        static PyExecutor pye = new PyExecutor();
         // THE FOLLOWING FUNCTIONS ARE GENERATED BY CS_AUTOGEN //
 _BODY_
     }
@@ -578,91 +514,30 @@ _BODY_
 }
 
 '''
-MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTION_NAME_")]'
-MAIN_F = '        public static _EXCEL_RETURN_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
-MAIN_RET_PYE = '            _PY_RETURN_TYPE_ ret = pye._FUNCTION_NAME_(_ARGS_);'
+MAIN_EXCEL = '        [ExcelFunction(Name = "_FUNCTIONNAME_")]'
+MAIN_F = '        public static _EXCELRETURNTYPE_ _FUNCTIONNAME_(_PARAMETERS_)'
+MAIN_RET_PYE = '            _PYRETURNTYPE_ ret = pye._FUNCTIONNAME_(_ARGS_);'
 MAIN_RETURN_S = '            return _RET_;'
 MAIN_DOCSTRING = '''                {
-                    "_FUNCTION_NAME_",
+                    "_FUNCTIONNAME_",
 @"_DOCSTRING_"
                 },
-'''
-MAIN_LIST = r'''
-            int len = ret.Length;
-            if (len == 0) { return "N/A"; }
-
-            dynamic xlApp = ExcelDnaUtil.Application;
-            string cell_addr = xlApp.Range(func_pos).Address(false, false, XlCall.xlcA1R1c1);
-            int[] ac = ExManip.GetCellPos(cell_addr);
-            int y = ac[0];
-            int x = ac[1];
-
-            // check empty cells
-            for (int i = 0; i < len; i++) {
-                var x_ref = new ExcelReference(y + i, x - 1);
-                string cell_location = x_ref.GetValue().ToString();
-                if (cell_location != "ExcelDna.Integration.ExcelEmpty") {
-                    string addr = xlApp.Cells(y + i + 1, x).Address;
-                    string errmsg = $@"Cannot overwrite non-empty cell(cell_location): {addr}";
-                    pye.qxlpyLogMessage(errmsg, "WARNING");
-                    return errmsg;
-                }
-            }
-
-            // fill values
-            for (int i = 0; i < len; i++) {
-                var ex_ref = new ExcelReference(y + i, x - 1);
-                FillDataCell(ex_ref, ret[i]);
-            }
-'''
-MAIN_DICT = r'''
-            object[][] kv_pair = {
-                ret[0].ToArray(),
-                ret[1].ToArray()
-            };
-            int len = kv_pair[0].Length;
-            if (len == 0) { return "N/A"; }
-
-            dynamic xlApp = ExcelDnaUtil.Application;
-            string cell_addr = xlApp.Range(func_pos).Address(false, false, XlCall.xlcA1R1c1);
-            int[] ac = ExManip.GetCellPos(cell_addr);
-            int y = ac[0];
-            int x = ac[1];
-
-            // check empty cells
-            for (int i = 0; i < len; i++) {
-                for (int j = 0; j < 2; j++) {
-                    var x_ref = new ExcelReference(y + i, x - 2 + j);
-                    string cell_location = x_ref.GetValue().ToString();
-                    if (cell_location != "ExcelDna.Integration.ExcelEmpty") {
-                        string errmsg = "Cannot overwrite non-empty cell(s): " + xlApp.Cells(y + i + 1, x - 1 + j).Address;
-                        pye.qxlpyLogMessage(errmsg, "WARNING");
-                        return errmsg;
-                    }
-                }
-            }
-
-            // fill values
-            for (int i = 0; i < len; i++) {
-                for (int j = 0; j < 2; j++) {
-                    var ex_ref = new ExcelReference(y + i, x - 2 + j);
-                    FillDataCell(ex_ref, kv_pair[j][i]);
-                }
-            }
 '''
 ### main.cs string templates ENDS ###
 
 
 ### python.cs string templates ###
-PYTHON_BODY = r'''
-using Python.Runtime;
-
+PYTHON_BODY = r'''using Python.Runtime;
+using System;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace qxlpy
 {
     public class PyExecutor
     {
         private readonly PyModule SCOPE;
+        private readonly dynamic SITE, _PYTHONMODS_;
 
         public PyExecutor()
         {
@@ -676,9 +551,51 @@ namespace qxlpy
 
             using (Py.GIL())
             {
-                dynamic site = SCOPE.Import("site");
-                site.addsitedir(root);
+                SITE = SCOPE.Import("site");
+                SITE.addsitedir(root);
+_PYIMPORTLIST_
             }
+        }
+
+        private dynamic GetToTypeByValue (object obj)
+        {
+            // Return value with the desired type by type hierarchy
+            // Type hierarchy: int, float, string
+            string value_str = obj.ToString();
+            dynamic totype;
+            if (Regex.IsMatch(value_str, @"^[0-9]+$")) {
+                totype = Convert.ToInt64(obj);
+            }
+            else if (Regex.IsMatch(value_str, @"^[0-9]+\.[0-9]+$")) {
+                totype = Convert.ToDouble(obj);
+            }
+            else if (Regex.IsMatch(value_str, @"^[0-9.]+E[-+][0-9]+$")) {
+                totype = float.Parse(value_str, NumberStyles.Float);
+            }
+            else {
+                totype = Convert.ToString(obj);
+            }
+            return totype;
+        }
+
+        private dynamic GetPyTypeByValue (object obj)
+        {
+            // Return the desired PyType
+            string value_str = obj.ToString();
+            dynamic pytype;
+            if (Regex.IsMatch(value_str, @"^[0-9]+$")) {
+                pytype = new PyInt(Convert.ToInt64(obj));
+            }
+            else if (Regex.IsMatch(value_str, @"^[0-9]+\.[0-9]+$")) {
+                pytype = new PyFloat(Convert.ToDouble(obj));
+            }
+            else if (Regex.IsMatch(value_str, @"^[0-9.]+E[-+][0-9]+$")) {
+                pytype = new PyFloat(float.Parse(value_str, NumberStyles.Float));
+            }
+            else {
+                pytype = new PyString(Convert.ToString(obj));
+            }
+            return pytype;
         }
 
         // THE FOLLOWING FUNCTIONS WILL BE AUTOGEN //
@@ -689,66 +606,111 @@ _BODY_
 PYTHON_GIL = r'''
         {
             using (Py.GIL())
-            {_DL_INPUTS_
+            {_DLINPUTS_
 _BODY_
-_DL_RETURN_
+_DLRETURN_
                 return ret;
             }
         }
 '''
-PYTHON_FUNC = '        public _FUNC_TYPE_ _FUNCTION_NAME_(_PARAMETERS_)'
-PYTHON_IPT = '                dynamic imp = SCOPE.Import("quant._MODULE_NAME_");'
-PYTHON_CALL = '                _FUNC_TYPE_ ret = imp._FUNCTION_NAME_(_ARGS_);'
+PYTHON_FUNC = '        public _FUNCTYPE_ _FUNCTIONNAME_(_PARAMETERS_)'
+PYTHON_CALL = '                _FUNCTYPE_ ret = _PYTHONIMPORT_._FUNCTIONNAME_(_ARGS_);'
 PYTHON_LIST_RETURN = r'''
-                var ret_list = new List<_LIST_TYPE_>();
-                PyList pylist_ret = imp._FUNC_NAME_(_PY_PARAMS_);
+                PyList pylist_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
+                long len = pylist_ret.Length();
+                var ret = new object[len, 1];
+                int row = 0;
                 foreach (PyObject pyobj in pylist_ret) {
-                    ret_list.Add(Convert._TO_TYPE_(pyobj));
+                    ret[row, 0] = pyobj._TOTYPE_();
+                    row += 1;
                 }
-                object[] ret = ret_list.ToArray();
 '''
 PYTHON_DICT_RETURN = r'''
-                var ret = new List<List<object>>();
-                var keys = new List<object>();
-                var values = new List<object>();
-                PyDict pydict_ret = imp._FUNC_NAME_(_PY_PARAMS_);
+                PyDict pydict_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
+                var ret = new object[pydict_ret.Length(), 2];
+                int row = 0;
                 foreach (PyObject key in pydict_ret) {
-                    keys.Add(Convert._TO_KEY_TYPE_(key));
-                    values.Add(Convert._TO_VAL_TYPE_(pydict_ret.GetItem(key)));
+                    ret[row, 0] = key._TOKEYTYPE_();
+                    ret[row, 1] = pydict_ret.GetItem(key)._TOVALTYPE_();
+                    row += 1;
                 }
-                ret.Add(keys);
-                ret.Add(values);
+'''
+PYTHON_NESTED_LIST_RETURN = r'''
+                PyList pylist_ret = _PYTHONIMPORT_._FUNCNAME_(_PYPARAMS_);
+                long row_len = pylist_ret.Length();
+                long col_len = 0;
+                foreach (PyObject pyobj in pylist_ret) {
+                    col_len = pyobj.Length();
+                    break;
+                }
+                var ret = new object[row_len, col_len];
+
+                int row = 0;
+                foreach (PyObject pyobj in pylist_ret) {
+                    PyList pylist = PyList.AsList(pyobj);
+                    int col = 0;
+                    foreach (PyObject internal_pyobj in pylist) {
+                        ret[row, col] = internal_pyobj.ToString();
+                        col += 1;
+                    }
+                    row += 1;
+                }
 '''
 PYTHON_LIST_INPUT = r'''
-                var pylist__ARG_NAME_ = new PyList();
-                foreach (object n in _ARG_NAME_) {
-                    _ARG_TYPE_ obj__ARG_NAME_;
+                var pylist__ARGNAME_ = new PyList();
+                foreach (object n in _ARGNAME_) {
+                    object ea_obj = n;
+                    _ARGTYPE_ obj__ARGNAME_;
                     try {
-                        obj__ARG_NAME_ = Convert._TO_TYPE_(n);
+                        obj__ARGNAME_ = _TOTYPE_(ea_obj);
                     } catch (Exception e) {
-                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARG_TYPE_'";
+                        string error_msg = $"Wrong type in array: '{Convert.ToString(n)}' is not of type '_ARGTYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pylist__ARG_NAME_.Append(new _PY_TYPE_(obj__ARG_NAME_));
+                    pylist__ARGNAME_.Append(_PYTYPE_(obj__ARGNAME_));
                 }
 '''
 PYTHON_DICT_INPUT = r'''
-                var pydict__ARG_NAME_ = new PyDict();
-                for (int i = 0; i < _ARG_NAME_.GetLength(0); i++) {
-                    _KEY_TYPE_ k__ARG_NAME_;
-                    _VAL_TYPE_ v__ARG_NAME_;
+                var pydict__ARGNAME_ = new PyDict();
+                for (int i = 0; i < _ARGNAME_.GetLength(0); i++) {
+                    _KEYTYPE_ k__ARGNAME_;
+                    _VALTYPE_ v__ARGNAME_;
                     try {
-                        k__ARG_NAME_ = Convert._TO_KEYTYPE_(_ARG_NAME_[i, 0]);
-                        v__ARG_NAME_ = Convert._TO_VALTYPE_(_ARG_NAME_[i, 1]);
+                        object objkey = _ARGNAME_[i, 0];
+                        object objval = _ARGNAME_[i, 1];
+                        if (Convert.ToString(objkey) == "") {
+                            continue;
+                        }
+                        k__ARGNAME_ = _TOKEYTYPE_(objkey);
+                        v__ARGNAME_ = _TOVALTYPE_(objval);
                     } catch (Exception e) {
                         string error_msg = $"Wrong type in dictionary: ";
-                        error_msg += "'{Convert.ToString(k__ARG_NAME_)}' should be '_KEY_TYPE_' and ";
-                        error_msg += "'{Convert.ToString(v__ARG_NAME_)}' should be '_VAL_TYPE_'";
+                        error_msg += "'{Convert.ToString(objkey)}' should be '_KEYTYPE_' and ";
+                        error_msg += "'{Convert.ToString(objval)}' should be '_VALTYPE_'";
                         qxlpyLogMessage(error_msg, "ERROR");
                         throw new ArrayTypeMismatchException(error_msg);
                     }
-                    pydict__ARG_NAME_[k__ARG_NAME_.ToString()] = new _PY_TYPE_VAL_(v__ARG_NAME_);
+                    pydict__ARGNAME_[k__ARGNAME_] = _PYTYPEVAL_(v__ARGNAME_);
+                }
+'''
+PYTHON_NESTED_LIST_INPUT = r'''
+                var pylist__ARGNAME_ = new PyList();
+                for (int i = 0; i < _ARGNAME_.GetLength(0); i++) {
+                    var internal__ARGNAME_ = new PyList();
+                    for (int j = 0; j < _ARGNAME_.GetLength(1); j++) {
+                        object ea_obj = _ARGNAME_[i, j];
+                        _ARGTYPE_ obj__ARGNAME_;
+                        try {
+                            obj__ARGNAME_ = _TOTYPE_(ea_obj);
+                        } catch (Exception e) {
+                            string error_msg = $"Wrong type in array: '{Convert.ToString(ea_obj)}' is not of type 'string'";
+                            qxlpyLogMessage(error_msg, "ERROR");
+                            throw new ArrayTypeMismatchException(error_msg);
+                        }
+                        internal__ARGNAME_.Append(_PYTYPE_(obj__ARGNAME_));
+                    }
+                    pylist__ARGNAME_.Append(internal__ARGNAME_);
                 }
 '''
 ### python.cs string templates ENDS ###

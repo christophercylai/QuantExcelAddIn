@@ -8,7 +8,7 @@ from . import global_obj
 # pylint: disable=invalid-name
 
 
-def qxlpyStoreStrDict(objdict: Dict[str, str], prefix: str = "None") -> str:
+def qxlpyStoreStrDict(objdict: Dict[str, str], prefix: str) -> str:
     """
     store string dictionary and return the id
     """
@@ -23,17 +23,35 @@ def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     # returns a dictionary object
     return global_obj.get_obj(obj_name)
 
-def qxlpyStoreStrList(objlist: List[str], prefix: str = "None") -> str:
+def qxlpyStoreStrList(objlist: List[str], prefix: str) -> str:
     """
     store string list and return the id
     """
     return global_obj.store_obj(objlist, prefix)
 
-def qxlpyStoreDoubleList(objlist: List[float], prefix: str = "None") -> str:
+def qxlpyGetStrList(obj_name: str) -> List[str]:
+    """
+    return a list of strings
+    """
+    return global_obj.get_obj(obj_name)
+
+def qxlpyStoreDoubleList(objlist: List[float], prefix: str) -> str:
     """
     store float list and return the id
     """
     return global_obj.store_obj(objlist, prefix)
+
+def qxlpyStoreStrTable(nested_objlist: List[List[str]], prefix: str) -> str:
+    """
+    store a table of strings, i.e. List[List[str]]
+    """
+    return global_obj.store_obj(nested_objlist, prefix)
+
+def qxlpyGetStrTable(obj_name: str) -> List[List[str]]:
+    """
+    return a table of strings
+    """
+    return global_obj.get_obj(obj_name)
 
 def qxlpyListGlobalObjects() -> List[str]:
     """
