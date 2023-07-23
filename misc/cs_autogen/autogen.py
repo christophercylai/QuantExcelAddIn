@@ -40,6 +40,7 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
         str: 'string',
         int: 'long',
         float: 'double',
+        object: 'dynamic',
         list: 'object[]',
         dict: 'object[,]'
     }
@@ -195,7 +196,8 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 if p_type in type_map:
                     main_params += f'string '
                     python_params += f'{type_map[p_type]} '
-                    default_value =  ", null, true"  # by default, call CheckEmpty with assert = true, unless there is a default value
+                    # by default, call CheckEmpty with assert = true, unless there is a default value or p_type == str
+                    default_value =  "" if p_type == str else ", null, true"
                     if arg_default[ea_arg] is not None:
                         if p_type == bool:
                             default_value = f', "{str(arg_default[ea_arg]).lower()}"'
@@ -244,12 +246,14 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     raise KeyError(f'{key}.{func[0]}: {p_type} is not a valid type for C# autogen')
 
                 main_params += ea_arg
+                python_params += ea_arg
                 if arg_default[ea_arg] is not None:
                     if p_type == bool:
                         main_params += f' = "{str(arg_default[ea_arg]).lower()}"'
-                    else:
+                    elif p_type in [str, int, float]:
                         main_params += f' = "{arg_default[ea_arg]}"'
-                python_params += ea_arg
+                    else:
+                        main_params += ' = null'
                 main_params += ', '
                 python_params += ', '
                 pycall_params += ', '
@@ -272,11 +276,11 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             python_func = re.sub('_PARAMETERS_', python_params[:-2], python_func)
             python_call = re.sub('_ARGS_', pycall_params[:-2], python_call)
             python_dl_return = re.sub('_PYPARAMS_', pycall_params[:-2], python_dl_return)
-            if key.upper() not in python_module_list:
-                python_module_list.append(key.upper());
+            if key not in python_module_list:
+                python_module_list.append(key)
 
             python_f_body = ''
-            python_f_body += python_call;
+            python_f_body += python_call
             python_gil = templates.PYTHON_GIL
             python_gil = re.sub('_DLINPUTS_', python_dl_inputs, python_gil)
             python_gil = re.sub('_BODY_', python_f_body, python_gil)
@@ -285,14 +289,17 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
             python_cs += f'{python_gil}\n'
             python_mods = ''
             python_import_list = ''
+            python_reload_list = ''
             for ea_module in python_module_list:
-                python_mods += f"{ea_module}, "
-                python_import_list += f'                {ea_module} = SCOPE.Import("quant.{ea_module.lower()}");\n'
+                python_mods += f"{ea_module.upper()}, "
+                python_import_list += f'                {ea_module.upper()} = SCOPE.Import("quant.{ea_module}");\n'
+                python_reload_list += f'                importlib.reload({ea_module.upper()});\n'
             python_mods = python_mods[:-2]
             python_import_list = python_import_list[:-1]
             python_body = templates.PYTHON_BODY
             python_body = re.sub('_PYTHONMODS_', python_mods, python_body)
             python_body = re.sub('_PYIMPORTLIST_', python_import_list, python_body)
+            python_body = re.sub('_PYRELOADLIST_', python_reload_list, python_body)
             python_body = re.sub('_BODY_', python_cs, python_body)
 
     if gen_main:
