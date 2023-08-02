@@ -18,9 +18,15 @@ def qxlpyStoreStrDict(objdict: Dict[str, str], prefix: str) -> str:
 
 def qxlpyGetStrDict(obj_name: str) -> Dict[str, str]:
     """
-    return the dictionary object
+    return the string dictionary
     """
     # returns a dictionary object
+    return global_obj.get_obj(obj_name)
+
+def qxlpyGetObjDict(obj_name: str) -> Dict[object, object]:
+    """
+    return the object dictionary
+    """
     return global_obj.get_obj(obj_name)
 
 def qxlpyStoreStrList(objlist: List[str], prefix: str) -> str:
@@ -32,6 +38,12 @@ def qxlpyStoreStrList(objlist: List[str], prefix: str) -> str:
 def qxlpyGetStrList(obj_name: str) -> List[str]:
     """
     return a list of strings
+    """
+    return global_obj.get_obj(obj_name)
+
+def qxlpyGetObjList(obj_name: str) -> List[object]:
+    """
+    return a list of objects
     """
     return global_obj.get_obj(obj_name)
 
@@ -50,6 +62,12 @@ def qxlpyStoreStrTable(nested_objlist: List[List[str]], prefix: str) -> str:
 def qxlpyGetStrTable(obj_name: str) -> List[List[str]]:
     """
     return a table of strings
+    """
+    return global_obj.get_obj(obj_name)
+
+def qxlpyGetObjTable(obj_name: str) -> List[List[object]]:
+    """
+    return a table of objects
     """
     return global_obj.get_obj(obj_name)
 
