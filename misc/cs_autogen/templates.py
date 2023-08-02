@@ -605,7 +605,7 @@ _PYIMPORTLIST_
                 totype = float.Parse(value_str, NumberStyles.Float);
             }
             else {
-                totype = Convert.ToString(value_str);
+                totype = value_str;
             }
             return totype;
         }
@@ -625,7 +625,7 @@ _PYIMPORTLIST_
                 pytype = new PyFloat(float.Parse(value_str, NumberStyles.Float));
             }
             else {
-                pytype = new PyString(Convert.ToString(value_str));
+                pytype = new PyString(value_str);
             }
             return pytype;
         }
