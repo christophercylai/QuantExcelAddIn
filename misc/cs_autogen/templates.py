@@ -663,7 +663,7 @@ PYTHON_LIST_RETURN = r'''
                 var ret = new object[len, 1];
                 int row = 0;
                 foreach (PyObject pyobj in pylist_ret) {
-                    ret[row, 0] = GetToTypeByValue(pyobj);
+                    ret[row, 0] = _PYTYPE_;
                     row += 1;
                 }
 '''
@@ -672,8 +672,8 @@ PYTHON_DICT_RETURN = r'''
                 var ret = new object[pydict_ret.Length(), 2];
                 int row = 0;
                 foreach (PyObject key in pydict_ret) {
-                    ret[row, 0] = key.ToString();
-                    ret[row, 1] = GetToTypeByValue(pydict_ret.GetItem(key));
+                    ret[row, 0] = _KEYPYTYPE_;
+                    ret[row, 1] = _VALPYTYPE_;
                     row += 1;
                 }
 '''
@@ -692,7 +692,7 @@ PYTHON_NESTED_LIST_RETURN = r'''
                     PyList pylist = PyList.AsList(pyobj);
                     int col = 0;
                     foreach (PyObject internal_pyobj in pylist) {
-                        ret[row, col] = GetToTypeByValue(internal_pyobj);
+                        ret[row, col] = _PYTYPE_;
                         col += 1;
                     }
                     row += 1;

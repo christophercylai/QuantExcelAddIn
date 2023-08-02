@@ -155,15 +155,21 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 main_return_s = re.sub('_RET_', 'ret', main_return_s)
                 main_ret_pye = re.sub('_PYRETURNTYPE_', type_map[dict], main_ret_pye)
                 list_type = ""
+                pyobj_name = "pyobj"
                 if ret_type.__args__[0] in to_type_map:
                     list_type = ret_type.__args__[0]
                     python_dl_return = templates.PYTHON_LIST_RETURN
                 elif 'List' == ret_type.__args__[0]._name:
                     list_type = ret_type.__args__[0].__args__[0]
                     python_dl_return = templates.PYTHON_NESTED_LIST_RETURN
+                    pyobj_name = "internal_pyobj"
                 else:
                     raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
+                if list_type == object:
+                    python_dl_return = re.sub('_PYTYPE_', f"GetToTypeByValue({pyobj_name})", python_dl_return)
+                else:
+                    python_dl_return = re.sub('_PYTYPE_', f"{to_type_map[list_type]}({pyobj_name}.ToString())", python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
                 python_func  = re.sub('_FUNCTYPE_', type_map[dict], python_func)
                 python_call  = ''
@@ -174,7 +180,17 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
 
                 python_func  = re.sub('_FUNCTYPE_', type_map[dict], python_func)
                 python_call  = ''
+                key_type = ret_type.__args__[0]
+                val_type = ret_type.__args__[1]
                 python_dl_return = templates.PYTHON_DICT_RETURN
+                if key_type == object:
+                    python_dl_return = re.sub('_KEYPYTYPE_', f"GetToTypeByValue(key)", python_dl_return)
+                else:
+                    python_dl_return = re.sub('_KEYPYTYPE_', f"{to_type_map[val_type]}(key.ToString())", python_dl_return)
+                if val_type == object:
+                    python_dl_return = re.sub('_VALPYTYPE_', f"GetToTypeByValue(pydict_ret.GetItem(key))", python_dl_return)
+                else:
+                    python_dl_return = re.sub('_VALPYTYPE_', f"{to_type_map[val_type]}(pydict_ret.GetItem(key).ToString())", python_dl_return)
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
