@@ -596,16 +596,16 @@ _PYIMPORTLIST_
             string value_str = obj.ToString();
             dynamic totype;
             if (Regex.IsMatch(value_str, @"^[0-9]+$")) {
-                totype = Convert.ToInt64(obj);
+                totype = Convert.ToInt64(value_str);
             }
             else if (Regex.IsMatch(value_str, @"^[0-9]+\.[0-9]+$")) {
-                totype = Convert.ToDouble(obj);
+                totype = Convert.ToDouble(value_str);
             }
             else if (Regex.IsMatch(value_str, @"^[0-9.]+E[-+][0-9]+$")) {
                 totype = float.Parse(value_str, NumberStyles.Float);
             }
             else {
-                totype = Convert.ToString(obj);
+                totype = Convert.ToString(value_str);
             }
             return totype;
         }
@@ -616,16 +616,16 @@ _PYIMPORTLIST_
             string value_str = obj.ToString();
             dynamic pytype;
             if (Regex.IsMatch(value_str, @"^[0-9]+$")) {
-                pytype = new PyInt(Convert.ToInt64(obj));
+                pytype = new PyInt(Convert.ToInt64(value_str));
             }
             else if (Regex.IsMatch(value_str, @"^[0-9]+\.[0-9]+$")) {
-                pytype = new PyFloat(Convert.ToDouble(obj));
+                pytype = new PyFloat(Convert.ToDouble(value_str));
             }
             else if (Regex.IsMatch(value_str, @"^[0-9.]+E[-+][0-9]+$")) {
                 pytype = new PyFloat(float.Parse(value_str, NumberStyles.Float));
             }
             else {
-                pytype = new PyString(Convert.ToString(obj));
+                pytype = new PyString(Convert.ToString(value_str));
             }
             return pytype;
         }
@@ -663,7 +663,7 @@ PYTHON_LIST_RETURN = r'''
                 var ret = new object[len, 1];
                 int row = 0;
                 foreach (PyObject pyobj in pylist_ret) {
-                    ret[row, 0] = pyobj._TOTYPE_();
+                    ret[row, 0] = GetToTypeByValue(pyobj);
                     row += 1;
                 }
 '''
@@ -672,8 +672,8 @@ PYTHON_DICT_RETURN = r'''
                 var ret = new object[pydict_ret.Length(), 2];
                 int row = 0;
                 foreach (PyObject key in pydict_ret) {
-                    ret[row, 0] = key._TOKEYTYPE_();
-                    ret[row, 1] = pydict_ret.GetItem(key)._TOVALTYPE_();
+                    ret[row, 0] = key.ToString();
+                    ret[row, 1] = GetToTypeByValue(pydict_ret.GetItem(key));
                     row += 1;
                 }
 '''
@@ -692,7 +692,7 @@ PYTHON_NESTED_LIST_RETURN = r'''
                     PyList pylist = PyList.AsList(pyobj);
                     int col = 0;
                     foreach (PyObject internal_pyobj in pylist) {
-                        ret[row, col] = internal_pyobj.ToString();
+                        ret[row, col] = GetToTypeByValue(internal_pyobj);
                         col += 1;
                     }
                     row += 1;

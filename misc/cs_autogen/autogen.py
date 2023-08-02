@@ -163,7 +163,6 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                     python_dl_return = templates.PYTHON_NESTED_LIST_RETURN
                 else:
                     raise KeyError(f'{key}.{func[0]}: {ret_type} is not a valid type for C# autogen')
-                python_dl_return = re.sub('_TOTYPE_', to_type_map[list_type].replace('Convert.', ''), python_dl_return)
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
                 python_func  = re.sub('_FUNCTYPE_', type_map[dict], python_func)
@@ -177,8 +176,6 @@ def autogen(gen_main = True, gen_python = True, dryrun = False):
                 python_call  = ''
                 python_dl_return = templates.PYTHON_DICT_RETURN
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
-                python_dl_return = re.sub('_TOKEYTYPE_', to_type_map[ret_type.__args__[0]].replace('Convert.', ''), python_dl_return)
-                python_dl_return = re.sub('_TOVALTYPE_', to_type_map[ret_type.__args__[1]].replace('Convert.', ''), python_dl_return)
                 python_dl_return = re.sub('_FUNCNAME_', func[0], python_dl_return)
                 python_dl_return = re.sub('_PYTHONIMPORT_', key.upper(), python_dl_return)
             else:
